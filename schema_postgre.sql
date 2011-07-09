@@ -4,7 +4,7 @@
 
 -- Dumped from database version 9.0.4
 -- Dumped by pg_dump version 9.0.4
--- Started on 2011-07-09 13:50:20 CEST
+-- Started on 2011-07-09 14:52:59 CEST
 
 SET statement_timeout = 0;
 SET client_encoding = 'UTF8';
@@ -99,7 +99,7 @@ ALTER TABLE public.tx_out OWNER TO pident;
 --
 
 CREATE VIEW address_from AS
-    SELECT a.address, a.transaction_id, b.address AS address_from, a.amount, blocks.hash AS block FROM ((((tx_out a JOIN transactions ON ((transactions.transaction_id = a.transaction_id))) JOIN blocks ON ((blocks.hash = transactions.block))) JOIN tx_in ON ((tx_in.transaction_id = transactions.transaction_id))) JOIN tx_out b ON (((b.transaction_id = tx_in.previous_out) AND (b.n = tx_in.previous_n))));
+    SELECT a.address, a.transaction_id, b.address AS address_from, a.amount, blocks.hash AS block FROM ((((tx_out a LEFT JOIN transactions ON ((transactions.transaction_id = a.transaction_id))) LEFT JOIN blocks ON ((blocks.hash = transactions.block))) LEFT JOIN tx_in ON ((tx_in.transaction_id = transactions.transaction_id))) LEFT JOIN tx_out b ON (((b.transaction_id = tx_in.previous_out) AND (b.n = tx_in.previous_n))));
 
 
 ALTER TABLE public.address_from OWNER TO pident;
@@ -271,7 +271,7 @@ ALTER TABLE ONLY blocks
 
 --
 -- TOC entry 1821 (class 2606 OID 17976)
--- Dependencies: 1514 1515 1805
+-- Dependencies: 1805 1514 1515
 -- Name: transactions_fkey_block; Type: FK CONSTRAINT; Schema: public; Owner: pident
 --
 
@@ -281,7 +281,7 @@ ALTER TABLE ONLY transactions
 
 --
 -- TOC entry 1822 (class 2606 OID 18348)
--- Dependencies: 1811 1517 1515
+-- Dependencies: 1517 1515 1811
 -- Name: tx_id_transaction_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: pident
 --
 
@@ -321,7 +321,7 @@ GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
--- Completed on 2011-07-09 13:50:20 CEST
+-- Completed on 2011-07-09 14:52:59 CEST
 
 --
 -- PostgreSQL database dump complete

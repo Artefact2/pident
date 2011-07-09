@@ -152,14 +152,14 @@ function formatTransactionsTable($transactions) {
 			list($address, $amount) = $d;
 			$fee = bcadd($fee, $amount);
 			$amount = formatSatoshi($amount);
-			$a[] = "<a href='/address/$address'>$address</a>: $amount";
+			$a[] = "<a href='/address/$address#out_$id'>$address</a>: $amount";
 		}
 		foreach($tx['out'] as $d) {
 			list($address, $amount) = $d;
 			if($address == '') $address = '<em>&ltsome address?&gt;</em>';
 			$fee = bcsub($fee, $amount);
 			$amount = formatSatoshi($amount);
-			$b[] = "<a href='/address/$address'>$address</a>: $amount";
+			$b[] = "<a href='/address/$address#in_$id'>$address</a>: $amount";
 		}
 
 		if(bccomp($fee, '0') < 0) {
@@ -234,7 +234,7 @@ function formatAddressTransactions($data, $in = true) {
 		echo "<tr id='$prefix$id'>\n";
 		echo "<td><a href='#$prefix$id'>#</a></td>\n";
 		echo "<td><a href='/tx/$id' title='$id'>".substr($id, 0, 7)."…</a></td>\n";
-		echo "<td><a href='/block/$block'>".$block."</a></td>\n";
+		echo "<td><a href='/block/$block#$id'>".$block."</a></td>\n";
 		echo "<td>\n".$a."\n</td>\n";
 		echo "<td>\n".formatSatoshi($amount)."\n</td>\n";
 		echo "</tr>\n";

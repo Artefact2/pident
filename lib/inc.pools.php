@@ -51,11 +51,11 @@ function curl_send_request($uri, $postFields) {
 }
 
 $foundBy = array(
-	/*'DeepBit' => function() {
+		'DeepBit' => function() {
 		$main = curl_get_uri('https://deepbit.net/stats');
 		preg_match_all("%href='/stats/([0-9]+)'%", $main, $matches);
 
-		$p = '';
+		$p = $main;
 		foreach($matches[1] as $m) {
 			$p .= curl_get_uri('https://deepbit.net/stats/'.$m);
 		}
@@ -141,7 +141,7 @@ $foundBy = array(
 		}
 
 		return $blocks;
-	},*/
+	},
 	'Slush' => function() {
 		$main = curl_get_uri('http://mining.bitcoin.cz/stats/');
 		preg_match_all('%href=\'http://blockexplorer.com/block/([0-9a-f]{64})\'%', $main, $matches);

@@ -17,9 +17,8 @@ list($totalGenerated, $transactionsHTML) = formatTransactionsTable($transactions
 echo "<!DOCTYPE html>
 <html>
 <head>
+".HEADER."
 <title>Transaction $txid</title>
-<link type=\"text/css\" rel=\"stylesheet\" href=\"/theme.css\">
-<meta charset=\"utf-8\" />
 </head>
 <body>
 <h1>Transaction <a href='/tx/$txid'>$txid</a></h1>

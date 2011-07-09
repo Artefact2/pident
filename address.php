@@ -16,9 +16,8 @@ list(, $firstBlock, $in, $out) = fetchAddressTransactions($hash160);
 echo "<!DOCTYPE html>
 <html>
 <head>
+".HEADER."
 <title>Address $address</title>
-<link type=\"text/css\" rel=\"stylesheet\" href=\"/theme.css\">
-<meta charset=\"utf-8\" />
 </head>
 <body>
 <h1>Address <a href='/address/$address'>$address</a></h1>

@@ -45,9 +45,8 @@ $next = (count($next) > 0 ? implode(', ', $next) : 'N/A (this block is either at
 echo "<!DOCTYPE html>
 <html>
 <head>
+".HEADER."
 <title>Block $block</title>
-<link type=\"text/css\" rel=\"stylesheet\" href=\"/theme.css\">
-<meta charset=\"utf-8\" />
 </head>
 <body>
 <h1>Block <a href='/block/$block'>$block</a></h1>

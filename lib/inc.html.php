@@ -162,7 +162,7 @@ function formatTransactionsTable($transactions) {
 			$b[] = "<a href='/address/$address'>$address</a>: $amount";
 		}
 
-		if($fee < 0) {
+		if(bccomp($fee, '0') < 0) {
 			$totalGenerated = formatSatoshi(-$fee);
 			$fee = 'N/A';
 			$a = array('Generated BTC: '.$totalGenerated);
@@ -213,7 +213,7 @@ function formatAddressTransactions($data, $in = true) {
 	foreach($data as $id => $tx) {
 		$id = bits2hex($id);
 		$block = $tx['block'];
-		$addresses = $tx['addresses'];
+		$addresses = isset($tx['addresses']) ? $tx['addresses'] : array();
 		
 		if($in) {
 			$amount = $tx['amount'];

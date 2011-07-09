@@ -13,9 +13,8 @@ $version = VERSION;
 echo "<!DOCTYPE html>
 <html>
 <head>
+".HEADER."
 <title>pident index page</title>
-<link type=\"text/css\" rel=\"stylesheet\" href=\"/theme.css\">
-<meta charset=\"utf-8\" />
 </head>
 <body>
 <h1>pident — pool-biased blockchain representation <small>(version $version!)</small></h1>

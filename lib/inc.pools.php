@@ -51,7 +51,7 @@ function curl_send_request($uri, $postFields) {
 }
 
 $foundBy = array(
-		'DeepBit' => function() {
+	'DeepBit' => function() {
 		$main = curl_get_uri('https://deepbit.net/stats');
 		preg_match_all("%href='/stats/([0-9]+)'%", $main, $matches);
 
@@ -151,5 +151,31 @@ $foundBy = array(
 		$main = curl_get_uri('http://eligius.st/~artefact2/blocks/');
 		preg_match_all('%title="([0-9a-fA-F]{64})"%', $main, $matches);
 		return array_map('strtolower', $matches[1]);
+	},
+	'BTCMine' => function() {
+		$main = curl_get_uri('http://btcmine.com/stats/');
+		$main = str_replace(array(' ', "\n"), '', $main);
+		preg_match_all('%<trclass="(even|odd)"><td>[0-9]+</td><td>([0-9]+)</td>%', $main, $matches);
+		$blocksN = $matches[2];
+
+		$blocks = array();
+		foreach($blocksN as $bN) {
+			$blk = json_decode(shell_exec('bitcoind getblockbycount '.$bN), true);
+			$blocks[] = $blk['hash'];
+		}
+
+		return $blocks;
+	},
+	'Bitcoinpool' => function() {
+		$main = curl_get_uri('http://www.bitcoinpool.com/index.php?do=blocks');
+		preg_match_all('%<a class="clink".+">([0-9]+)</a>%', $main, $matches);
+
+		$blocks = array();
+		foreach($matches[1] as $bN) {
+			$blk = json_decode(shell_exec('bitcoind getblockbycount '.$bN), true);
+			$blocks[] = $blk['hash'];
+		}
+
+		return $blocks;
 	},
 );

@@ -1,0 +1,11 @@
+RewriteEngine On
+
+RewriteRule ^(block/)?0000[0-9a-fA-F]{60}$ block.php
+RewriteRule ^(address/)[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{25,34}$ address.php
+RewriteRule ^(tx/)[0-9a-fA-F]{64}$ transaction.php
+
+RewriteRule ^updateheuristics$ /dev/null
+RewriteRule ^hacks\.php$ /dev/null
+RewriteRule ^cache /dev/null
+RewriteRule ^schema_postgre\.sql$ /dev/null
+

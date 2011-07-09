@@ -1,0 +1,45 @@
+body {
+	font-family: monospace;
+}
+
+table {
+	text-align: center;
+	border-collapse: collapse;
+}
+
+tr:nth-child(odd) {
+	background-color:#F0FFFF;
+}
+tr:nth-child(even) {
+	background-color:#E8FFFF;
+}
+
+td, thead, tfoot {
+	border:  1px solid #CCFFFF;
+}
+
+th {
+	font-size: 1.1em;
+}
+
+h1 {
+	margin-bottom: 0;
+	padding-bottom: 0;
+}
+
+p#back {
+	margin-top: 0;
+	padding-top: 0;
+}
+
+td, th {
+	padding: 0.5em 1.5em;
+}
+
+a {
+	color: #002266;
+}
+
+a:visited {
+	color: #002266;
+}

@@ -1,0 +1,96 @@
+#!/usr/bin/env php
+<?php
+/* Author : Romain "Artefact2" Dalmaso <artefact2@gmail.com>
+ * This program is free software. It comes without any warranty, to
+ * the extent permitted by applicable law. You can redistribute it
+ * and/or modify it under the terms of the Do What The Fuck You Want
+ * To Public License, Version 2, as published by Sam Hocevar. See
+ * http://sam.zoy.org/wtfpl/COPYING for more details. */
+
+require __DIR__.'/lib/inc.main.php';
+$pg = $GLOBALS['pg'];
+
+/* Make sure we have bitcoind */
+if(strpos(shell_exec('bitcoind getblockbycount 42'), '00000000314e90489514c787d615cea50003af2023796ccdd085b6bcc1fa28f5') === false) {
+	echo 'bitcoind not in $PATH, or unpatched bitcoind present (must have getblockbyhash/getblockbycount) !'."\n";
+	die(1);
+}
+
+/* See if we need to do the initial dump */
+$genesis = json_decode(shell_exec('bitcoind getblockbycount 0'), true);
+$hasGenesis = pg_query_params($pg, 'SELECT COUNT(hash) FROM blocks WHERE hash = $1', array(hex2bits($genesis['hash'])));
+$r = pg_fetch_row($hasGenesis);
+$initialDump = ($r[0] == 0);
+pg_free_result($hasGenesis);
+
+$max = trim(shell_exec('bitcoind getblockcount'));
+$c = strlen($max);
+
+if($initialDump) {
+	echo "Performing the initial dump. This step must only be done once, but it will take a long time !\nDO NOT INTERRUPT THE PROCESS.\n";
+	pg_query('TRUNCATE TABLE blocks, transactions, tx_in, tx_out CASCADE');
+	$start = 0;
+} else {
+	$recent = pg_query($pg, 'SELECT hash FROM blocks ORDER BY time DESC LIMIT 200');
+	while($r = pg_fetch_row($recent)) {
+		$stop[bits2hex($r[0])] = true;
+	}
+
+	for($i = $max; $i >= 0; --$i) {
+		$blk = json_decode(shell_exec('bitcoind getblockbycount '.$i), true);
+		if(isset($stop[$blk['hash']])) {
+			$start = $i + 1;
+			break;		}
+	}
+	if(!isset($start)) $start = 0;
+}
+
+for($i = $start; $i <= $max; ++$i) {
+	$fI = str_pad($i, $c, '0', STR_PAD_LEFT);
+	$blk = json_decode(shell_exec('bitcoind getblockbycount '.$i), true);
+
+	echo "\r$fI/$max processing... (".$blk['hash'].")";
+
+	$blkBits = hex2bits($blk['hash']);
+	$time = $blk['time'];
+	$prevBits = ($i == 0) ? 'NULL' : "B'".hex2bits($blk['prev_block'])."'";
+
+	$tx_ = array();
+	$tx_in = array();
+	$tx_out = array();
+
+	foreach($blk['tx'] as $tx) {
+		$txId = hex2bits($tx['hash']);
+		$tx_[] = "(B'$txId', B'$blkBits')";
+
+		foreach($tx['in'] as $n => $in) {
+			if(isset($in['coinbase'])) continue;
+
+			$prevN = $in['prev_out']['n'];
+			$prevOut = hex2bits($in['prev_out']['hash']);
+			$tx_in[] = "(B'$txId', $n, $prevN, B'$prevOut')";
+		}
+
+		foreach($tx['out'] as $n => $out) {
+			if(preg_match($r = '%^OP_DUP OP_HASH160 ([0-9a-f]{40}) OP_EQUALVERIFY OP_CHECKSIG( OP_CHECKSIG)*( OP_NOP)?$%', $out['scriptPubKey'])) {
+				$address = "B'".hex2bits(preg_replace($r, '$1', $out['scriptPubKey']))."'";
+			} else if(preg_match($r = '%^([0-9a-f]{130}) OP_CHECKSIG$%', $out['scriptPubKey'])) {
+				$pubKey = preg_replace($r, '$1', $out['scriptPubKey']);
+				$address = "B'".hex2bits(Bitcoin::addressToHash160(Bitcoin::pubKeyToAddress($pubKey)))."'";
+			} else {
+				$address = 'NULL';
+				trigger_error('Unknown scriptPubKey type: '.$out['scriptPubKey'], E_USER_NOTICE);
+			}
+			$amount = btc2satoshi($out['value']);
+
+			$tx_out[] = "(B'$txId', $n, $amount, $address)";
+		}
+	}
+
+	pg_query("INSERT INTO blocks(hash, time, previous_hash) VALUES(B'$blkBits', $time, $prevBits);");
+	pg_query("INSERT INTO transactions(transaction_id, block) VALUES ".implode(',', $tx_).";");
+	if(count($tx_out) > 0) pg_query("INSERT INTO tx_out(transaction_id, n, amount, address) VALUES ".implode(',', $tx_out).";");
+	if(count($tx_in) > 0) pg_query("INSERT INTO tx_in(transaction_id, n, previous_n, previous_out) VALUES ".implode(',', $tx_in).";");
+}
+
+if(isset($tx_out)) echo "\n";

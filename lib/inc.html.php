@@ -1,4 +1,4 @@
-<?php
+<?PHP
 /* Author : Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -259,10 +259,15 @@ $rows
 ";
 }
 
-function formatRecentBlocks($n) {
+function formatRecentBlocks($n, $foundBy = null) {
+	if($foundBy !== null) {
+		$cond = "found_by = '$foundBy'";
+	} else $cond = 'true';
+
 	$req = pg_query("
 	SELECT hash, time, found_by
 	FROM blocks
+	WHERE $cond
 	ORDER BY time DESC
 	LIMIT $n
 	");
@@ -293,6 +298,43 @@ $cols
 <tfoot>
 $cols
 </tfoot>
+<tbody>
+$rows
+</tbody>
+</table>
+";
+}
+
+function formatPools() {
+	$req = pg_query("
+	SELECT found_by, COUNT(hash)
+	FROM blocks
+	WHERE found_by IS NOT NULL
+	GROUP BY found_by
+	ORDER BY found_by ASC
+	");
+
+	$rows = '';
+	while($r = pg_fetch_row($req)) {
+		$rows .= "<tr>\n";
+
+		$pool = $r[0];
+		$count = $r[1];
+		$prettyPool = prettyPool($pool);
+
+		$rows .= "<td>$prettyPool</td>\n";
+		$rows .= "<td><a href='/pool/$pool'>$count</a></td>\n";
+
+		$rows .= "</tr>\n";
+	}
+	
+	return "<table>
+<thead>
+<tr>
+<th>Pool</th>
+<th title='This number has nothing to do with the total number of blocks found by this pool.'><span>Blocks</span></th>
+</tr>
+</thead>
 <tbody>
 $rows
 </tbody>

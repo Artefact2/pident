@@ -131,8 +131,8 @@ function extractColor($seed, $min = 0, $max = 256) {
 	assert('$min < $max');
 
 	$seed = sha1($seed);
-	$red = hexdec(substr($seed, 0, 2));
-	$green = hexdec(substr($seed, 2, 2));
+	$red = hexdec(substr($seed, 20, 2));
+	$green = hexdec(substr($seed, 12, 2));
 	$blue = hexdec(substr($seed, 4, 2));
 
 	$gray = 0.3 * $red + 0.59 * $green + 0.11 * $blue;

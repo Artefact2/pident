@@ -43,3 +43,15 @@ a {
 a:visited {
 	color: #002266;
 }
+
+tr[title] > span, th[title] > span {
+	border-bottom: 1px dotted black;
+}
+
+span.pool {
+	display: inline-block;
+	padding-left: 0.7em;
+	padding-right: 0.7em;
+	padding-top: 0.15em;
+	padding-bottom: 0.15em;
+}

@@ -8,23 +8,20 @@
 
 require __DIR__.'/lib/inc.main.php';
 
-$version = VERSION;
+$pool = htmlspecialchars(@array_pop(explode('/', $_SERVER['REQUEST_URI'])));
 
 echo "<!DOCTYPE html>
 <html>
 <head>
 ".HEADER."
-<title>pident index page</title>
+<title>Pool $pool</title>
 </head>
 <body>
-<h1>pident — pool-biased blockchain representation <small>(version $version!)</small></h1>
+<h1>Pool <a href='/pool/$pool'>$pool</a> (most recent blocks)</h1>
+<p id='back'><a href='/'>&larr; Back to the main page</a></p>
 ";
 
-echo "<h2>Most recent blocks</h2>\n";
-echo formatRecentBlocks(25);
-
-echo "<h2>Pools I'm aware of</h2>\n";
-echo formatPools();
+echo formatRecentBlocks(100, $pool);
 
 echo FOOTER."
 </body>

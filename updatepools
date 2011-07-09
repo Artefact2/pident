@@ -1,3 +1,4 @@
+#!/usr/bin/env php
 <?php
 /* Author : Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  * This program is free software. It comes without any warranty, to
@@ -8,26 +9,14 @@
 
 require __DIR__.'/lib/inc.main.php';
 
-$version = VERSION;
+@unlink('cookies.txt');
 
-echo "<!DOCTYPE html>
-<html>
-<head>
-".HEADER."
-<title>pident index page</title>
-</head>
-<body>
-<h1>pident — pool-biased blockchain representation <small>(version $version!)</small></h1>
-";
+foreach($foundBy as $pool => $callback) {
+	$in = call_user_func($callback);
+	if(count($in) == 0) continue;
 
-echo "<h2>Most recent blocks</h2>\n";
-echo formatRecentBlocks(25);
+	$in = array_map(function($h) { return "B'".hex2bits($h)."'"; }, $in);
+	$in = implode(',', $in);
 
-echo "<h2>Pools I'm aware of</h2>\n";
-echo formatPools();
-
-echo FOOTER."
-</body>
-</html>
-";
-
+	pg_query("UPDATE blocks SET found_by = '$pool' WHERE hash IN ($in)");
+}

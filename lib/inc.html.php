@@ -280,7 +280,7 @@ function formatRecentBlocks($n) {
 		$rows .= "<tr>\n";
 
 		$rows .= "<td>".prettyDuration($now - $r[1], 2)." ago</td>\n";
-		$rows .= "<td><a href='/blocks/$block'>$block</a></td>\n";
+		$rows .= "<td><a href='/block/$block'>$block</a></td>\n";
 		$rows .= "<td>".prettyPool($r[2])."</td>\n";
 
 		$rows .= "</tr>\n";

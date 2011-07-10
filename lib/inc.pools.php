@@ -56,9 +56,7 @@ $foundBy = array(
 		preg_match_all("%href='/stats/([0-9]+)'%", $main, $matches);
 
 		$p = $main;
-		foreach($matches[1] as $m) {
-			$p .= curl_get_uri('https://deepbit.net/stats/'.$m);
-		}
+		$p .= curl_get_uri('https://deepbit.net/stats/'.$matches[1][0]);
 
 		preg_match_all("%href='http://blockexplorer.com/block/([0-9a-f]{64})'%", $p, $matches);
 		return $matches[1];
@@ -77,10 +75,10 @@ $foundBy = array(
 
 		$blockPage = '';
 		$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/1.html');
-		$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/2.html');
-		$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/3.html');
-		$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/4.html');
-		$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/5.html');
+		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/2.html');
+		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/3.html');
+		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/4.html');
+		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/5.html');
 		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/6.html');
 		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/7.html');
 		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/8.html');

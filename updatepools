@@ -18,5 +18,5 @@ foreach($foundBy as $pool => $callback) {
 	$in = array_map(function($h) { return "B'".hex2bits($h)."'"; }, $in);
 	$in = implode(',', $in);
 
-	pg_query("UPDATE blocks SET found_by = '$pool' WHERE hash IN ($in)");
+	pg_query("UPDATE blocks SET found_by = '$pool' WHERE hash IN ($in) AND found_by IS NULL");
 }

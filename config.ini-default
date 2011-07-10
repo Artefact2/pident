@@ -9,6 +9,11 @@ maximum_backlog = 30 * 86400
 ; Magic constant. Decreasing it will make recent blocks count more in score calculations.
 tau = 14 * 86400
 
+; Use this user-agent when fetching some webpages. Use yours if you want.
+; If you find out they banned your because of this, there is a list of common user agents here :
+; http://whatsmyuseragent.com/CommonUserAgents.asp
+user_agent = "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.30 (KHTML, like Gecko) Chrome/12.0.742.112 Safari/534.30"
+
 ; Fill these if you want to enable MtRed support.
 mtred[username] = ""
 mtred[password] = ""

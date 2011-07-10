@@ -4,6 +4,7 @@ RewriteRule ^(block/)?0000[0-9a-fA-F]{60}$ block.php
 RewriteRule ^(address/)[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]{25,34}$ address.php
 RewriteRule ^(tx/)[0-9a-fA-F]{64}$ transaction.php
 RewriteRule ^pool/ pool.php
+RewriteRule ^b/(0|([1-9][0-9]*))$ block.php?redirect
 
 RewriteRule ^updateheuristics$ /dev/null
 RewriteRule ^hacks\.php$ /dev/null

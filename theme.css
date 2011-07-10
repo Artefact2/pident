@@ -14,7 +14,7 @@ tr:nth-child(even) {
 	background-color:#E8FFFF;
 }
 
-td, thead, tfoot {
+td, th {
 	border:  1px solid #CCFFFF;
 }
 

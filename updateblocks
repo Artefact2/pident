@@ -87,7 +87,7 @@ for($i = $start; $i <= $max; ++$i) {
 		}
 	}
 
-	pg_query("INSERT INTO blocks(hash, time, previous_hash) VALUES(B'$blkBits', $time, $prevBits);");
+	pg_query("INSERT INTO blocks(hash, time, previous_hash, number) VALUES(B'$blkBits', $time, $prevBits, $i);");
 	pg_query("INSERT INTO transactions(transaction_id, block) VALUES ".implode(',', $tx_).";");
 	if(count($tx_out) > 0) pg_query("INSERT INTO tx_out(transaction_id, n, amount, address) VALUES ".implode(',', $tx_out).";");
 	if(count($tx_in) > 0) pg_query("INSERT INTO tx_in(transaction_id, n, previous_n, previous_out) VALUES ".implode(',', $tx_in).";");

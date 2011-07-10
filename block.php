@@ -9,9 +9,47 @@
 require __DIR__.'/lib/inc.main.php';
 
 $block = @array_pop(explode('/', $_SERVER['REQUEST_URI']));
+
+if(isset($_GET['redirect'])) {
+	$blocks = pg_query("SELECT hash FROM blocks WHERE number = $block");
+	$hashs = array();
+	while($r = pg_fetch_row($blocks)) $hashs[] = bits2hex($r[0]);
+
+	if(count($hashs) == 1) {
+		header('Location: /block/'.$hashs[0]);
+	} else if(count($hashs) == 0) {
+		header('Content-Type: text/plain', 404, true);
+		echo "There is no block with this number. Problem?";
+	} else {		
+		echo "<!DOCTYPE html>
+<html>
+<head>
+".HEADER."
+<title>Ambiguous block $block</title>
+</head>
+<body>
+<h1>Ambiguous block <a href='/b/$block'>$block</a></h1>
+<p id='back'><a href='/'>&larr; Back to the main page</a></p>
+<p>There are more than one block with number $number. This is often caused by invalid blocks that haven't been pruned from the blockchain yet. Did you mean one of those blocks ?</p>
+<ul>
+";
+
+		foreach($hashs as $h) {
+			echo "<li>Block <a href='/block/$h'>$h</a></li>\n";
+		}
+
+		echo "</ul>\n".FOOTER."
+</body>
+</html>
+";
+	}
+
+	die();
+}
+
 $bits = hex2bits($block);
 
-list($block, $time, $foundBy, $transactions) = fetchTransactions($block, null);
+list($block, $time, $number, $foundBy, $transactions) = fetchTransactions($block, null);
 list($totalGenerated, $transactionsHTML) = formatTransactionsTable($transactions);
 
 $foundBy = prettyPool($foundBy);
@@ -46,12 +84,13 @@ echo "<!DOCTYPE html>
 <html>
 <head>
 ".HEADER."
-<title>Block $block</title>
+<title>Block $number - $block</title>
 </head>
 <body>
 <h1>Block <a href='/block/$block'>$block</a></h1>
 <p id='back'><a href='/'>&larr; Back to the main page</a></p>
 <ul>
+<li>Short URI of this block: <strong><a href='/b/$number'>/b/$number</a></strong></li>
 <li>Previous block: $previous</li>
 <li>Next block(s):  $next</li>
 <li>Generated BTC: $totalGenerated (includes transaction fees)</li>

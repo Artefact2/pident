@@ -9,6 +9,21 @@
 
 require __DIR__.'/lib/inc.main.php';
 
+/* Update block numbers */
+$max = trim(shell_exec('bitcoind getblockcount'));
+$c = strlen($max);
+
+for($i = 0; $i <= $max; ++$i) {
+	$fI = str_pad($i, $c, '0', STR_PAD_LEFT);
+	$blk = json_decode(shell_exec('bitcoind getblockbycount '.$i), true);
+
+	echo "\r$fI/$max processing... (".$blk['hash'].")";
+
+	$hash = hex2bits($blk['hash']);
+
+	pg_query("UPDATE blocks SET number = $i WHERE hash = B'$hash'");
+}
+
 /* Update generation/OP_NOP addresses correctly.
 $max = trim(shell_exec('bitcoind getblockcount'));
 $c = strlen($max);

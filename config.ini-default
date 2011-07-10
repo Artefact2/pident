@@ -4,10 +4,10 @@
 postgresql_connection_string = "host=127.0.0.1 port=5432 dbname=pident user=pident password=pident"
 
 ; Maximum age of blocks to include in score calculations.
-maximum_backlog = 30 * 86400
+maximum_backlog = 2419200
 
 ; Magic constant. Decreasing it will make recent blocks count more in score calculations.
-tau = 14 * 86400
+tau = 1209600
 
 ; Use this user-agent when fetching some webpages. Use yours if you want.
 ; If you find out they banned your because of this, there is a list of common user agents here :

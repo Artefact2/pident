@@ -61,7 +61,7 @@ function fetchTransactions($blockHash, $txHash = null) {
 
 	if($blockHash) {
 		$req = "
-		SELECT time, found_by
+		SELECT time, found_by, number
 		FROM blocks
 		WHERE blocks.hash = B'$bits'
 		";
@@ -74,12 +74,13 @@ function fetchTransactions($blockHash, $txHash = null) {
 		}
 		$time = date('Y-m-d H:i:s', $r[0]);
 		$foundBy = $r[1];
+		$number = $r[2];
 		$block = $blockHash;
 
 		$condition = "block = B'$bits'";
 	} else {
 		$req = "
-		SELECT block, time
+		SELECT block, time, number
 		FROM transactions
 		LEFT JOIN blocks ON blocks.hash = transactions.block
 		WHERE transaction_id = B'$bits'
@@ -94,6 +95,7 @@ function fetchTransactions($blockHash, $txHash = null) {
 		$block = bits2hex($r[0]);
 		$time = date('Y-m-d H:i:s', $r[1]);
 		$foundBy = null;
+		$number = $r[2];
 
 		$condition = "transactions.transaction_id = B'$bits'";
 	}
@@ -125,7 +127,7 @@ function fetchTransactions($blockHash, $txHash = null) {
 		);
 	}
 
-	return array($block, $time, $foundBy, $transactions);
+	return array($block, $time, $number, $foundBy, $transactions);
 }
 
 function formatTransactionsTable($transactions) {
@@ -265,16 +267,16 @@ function formatRecentBlocks($n, $foundBy = null) {
 	} else $cond = 'true';
 
 	$req = pg_query("
-	SELECT hash, time, found_by
+	SELECT hash, time, found_by, number
 	FROM blocks
 	WHERE $cond
-	ORDER BY time DESC
+	ORDER BY number DESC
 	LIMIT $n
 	");
 
 	$cols = "<tr>
-<th>&#9660; When</th>
-<th>Block</th>
+<th>When</th>
+<th colspan='2'>&#9660; Block</th>
 <th>Found by</th>
 </tr>";
 
@@ -282,9 +284,11 @@ function formatRecentBlocks($n, $foundBy = null) {
 	$now = time();
 	while($r = pg_fetch_row($req)) {
 		$block = bits2hex($r[0]);
+		$blkNum = $r[3];
 		$rows .= "<tr>\n";
 
 		$rows .= "<td>".prettyDuration($now - $r[1], 2)." ago</td>\n";
+		$rows .= "<td><a href='/b/$blkNum'>$blkNum</a></td>";
 		$rows .= "<td><a href='/block/$block'>$block</a></td>\n";
 		$rows .= "<td>".prettyPool($r[2])."</td>\n";
 
@@ -306,10 +310,14 @@ $rows
 }
 
 function formatPools() {
+	$start = time() - ($rDuration = $GLOBALS['conf']['maximum_backlog']);
+	$duration = prettyDuration($rDuration);
+
 	$req = pg_query("
-	SELECT found_by, COUNT(hash)
+	SELECT found_by, COUNT(hash), MIN(time)
 	FROM blocks
 	WHERE found_by IS NOT NULL
+	AND time >= $start
 	GROUP BY found_by
 	ORDER BY found_by ASC
 	");
@@ -322,6 +330,9 @@ function formatPools() {
 		$count = $r[1];
 		$prettyPool = prettyPool($pool);
 
+		$lag = ($r[2] - $start) / $rDuration;
+		if($lag > 0.2) $count .= ' (inaccurate)';
+
 		$rows .= "<td>$prettyPool</td>\n";
 		$rows .= "<td><a href='/pool/$pool'>$count</a></td>\n";
 
@@ -332,7 +343,7 @@ function formatPools() {
 <thead>
 <tr>
 <th>Pool</th>
-<th title='This number has nothing to do with the total number of blocks found by this pool.'><span>Blocks</span></th>
+<th>Blocks found in the last $duration</th>
 </tr>
 </thead>
 <tbody>

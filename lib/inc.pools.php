@@ -166,7 +166,9 @@ $foundBy = array(
 	},
 	'Bitcoinpool' => function() {
 		$main = curl_get_uri('http://www.bitcoinpool.com/index.php?do=blocks');
-		preg_match_all('%<a class="clink".+">([0-9]+)</a>%', $main, $matches);
+		$main = str_replace(array(' ', "\n", "\t"), '', $main);
+		$main = preg_replace('%<tr.+Invalid</td></tr>%U', '', $main);
+		preg_match_all('%<aclass="clink".+>([0-9]+)</a></td>%U', $main, $matches);
 
 		$blocks = array();
 		foreach($matches[1] as $bN) {

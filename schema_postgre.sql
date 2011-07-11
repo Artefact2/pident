@@ -4,7 +4,7 @@
 
 -- Dumped from database version 9.0.4
 -- Dumped by pg_dump version 9.0.4
--- Started on 2011-07-09 14:52:59 CEST
+-- Started on 2011-07-11 14:08:33 CEST
 
 SET statement_timeout = 0;
 SET client_encoding = 'UTF8';
@@ -39,7 +39,8 @@ CREATE TABLE blocks (
     hash bit(256) NOT NULL,
     "time" bigint NOT NULL,
     found_by character varying(127),
-    previous_hash bit(256)
+    previous_hash bit(256),
+    number bigint NOT NULL
 );
 
 
@@ -99,7 +100,7 @@ ALTER TABLE public.tx_out OWNER TO pident;
 --
 
 CREATE VIEW address_from AS
-    SELECT a.address, a.transaction_id, b.address AS address_from, a.amount, blocks.hash AS block FROM ((((tx_out a LEFT JOIN transactions ON ((transactions.transaction_id = a.transaction_id))) LEFT JOIN blocks ON ((blocks.hash = transactions.block))) LEFT JOIN tx_in ON ((tx_in.transaction_id = transactions.transaction_id))) LEFT JOIN tx_out b ON (((b.transaction_id = tx_in.previous_out) AND (b.n = tx_in.previous_n))));
+    SELECT a.address, a.transaction_id, b.address AS address_from, a.amount, blocks.hash AS block, blocks.number FROM ((((tx_out a LEFT JOIN transactions ON ((transactions.transaction_id = a.transaction_id))) LEFT JOIN blocks ON ((blocks.hash = transactions.block))) LEFT JOIN tx_in ON ((tx_in.transaction_id = transactions.transaction_id))) LEFT JOIN tx_out b ON (((b.transaction_id = tx_in.previous_out) AND (b.n = tx_in.previous_n))));
 
 
 ALTER TABLE public.address_from OWNER TO pident;
@@ -111,7 +112,7 @@ ALTER TABLE public.address_from OWNER TO pident;
 --
 
 CREATE VIEW address_to AS
-    SELECT a.address, b.transaction_id, b.address AS address_to, a.amount, blocks.hash AS block, a.transaction_id AS transaction_id_from FROM ((((tx_out a JOIN tx_in ON (((tx_in.previous_out = a.transaction_id) AND (tx_in.previous_n = a.n)))) JOIN transactions ON ((transactions.transaction_id = tx_in.transaction_id))) JOIN blocks ON ((blocks.hash = transactions.block))) JOIN tx_out b ON ((b.transaction_id = transactions.transaction_id)));
+    SELECT a.address, b.transaction_id, b.address AS address_to, a.amount, blocks.hash AS block, a.transaction_id AS transaction_id_from, blocks.number FROM ((((tx_out a JOIN tx_in ON (((tx_in.previous_out = a.transaction_id) AND (tx_in.previous_n = a.n)))) JOIN transactions ON ((transactions.transaction_id = tx_in.transaction_id))) JOIN blocks ON ((blocks.hash = transactions.block))) JOIN tx_out b ON ((b.transaction_id = transactions.transaction_id)));
 
 
 ALTER TABLE public.address_to OWNER TO pident;
@@ -157,7 +158,7 @@ CREATE VIEW tx_total_out AS
 ALTER TABLE public.tx_total_out OWNER TO pident;
 
 --
--- TOC entry 1806 (class 2606 OID 17968)
+-- TOC entry 1808 (class 2606 OID 17968)
 -- Dependencies: 1514 1514
 -- Name: blocks_pkey; Type: CONSTRAINT; Schema: public; Owner: pident; Tablespace: 
 --
@@ -167,7 +168,7 @@ ALTER TABLE ONLY blocks
 
 
 --
--- TOC entry 1812 (class 2606 OID 18347)
+-- TOC entry 1814 (class 2606 OID 18347)
 -- Dependencies: 1515 1515
 -- Name: transactions_pkey; Type: CONSTRAINT; Schema: public; Owner: pident; Tablespace: 
 --
@@ -177,7 +178,7 @@ ALTER TABLE ONLY transactions
 
 
 --
--- TOC entry 1816 (class 2606 OID 18582)
+-- TOC entry 1818 (class 2606 OID 18582)
 -- Dependencies: 1517 1517 1517
 -- Name: tx_in_pkey; Type: CONSTRAINT; Schema: public; Owner: pident; Tablespace: 
 --
@@ -187,7 +188,7 @@ ALTER TABLE ONLY tx_in
 
 
 --
--- TOC entry 1819 (class 2606 OID 18358)
+-- TOC entry 1821 (class 2606 OID 18358)
 -- Dependencies: 1518 1518 1518
 -- Name: tx_out_pkey; Type: CONSTRAINT; Schema: public; Owner: pident; Tablespace: 
 --
@@ -197,7 +198,25 @@ ALTER TABLE ONLY tx_out
 
 
 --
--- TOC entry 1807 (class 1259 OID 19600)
+-- TOC entry 1805 (class 1259 OID 19650)
+-- Dependencies: 1514
+-- Name: blocks_found_by_idx; Type: INDEX; Schema: public; Owner: pident; Tablespace: 
+--
+
+CREATE INDEX blocks_found_by_idx ON blocks USING btree (found_by);
+
+
+--
+-- TOC entry 1806 (class 1259 OID 19649)
+-- Dependencies: 1514
+-- Name: blocks_number_idx; Type: INDEX; Schema: public; Owner: pident; Tablespace: 
+--
+
+CREATE INDEX blocks_number_idx ON blocks USING btree (number);
+
+
+--
+-- TOC entry 1809 (class 1259 OID 19600)
 -- Dependencies: 1514
 -- Name: blocks_time_idx; Type: INDEX; Schema: public; Owner: pident; Tablespace: 
 --
@@ -206,7 +225,7 @@ CREATE INDEX blocks_time_idx ON blocks USING btree ("time");
 
 
 --
--- TOC entry 1808 (class 1259 OID 19577)
+-- TOC entry 1810 (class 1259 OID 19577)
 -- Dependencies: 1514
 -- Name: fki_blocks_previous_hash_fkey; Type: INDEX; Schema: public; Owner: pident; Tablespace: 
 --
@@ -215,7 +234,7 @@ CREATE INDEX fki_blocks_previous_hash_fkey ON blocks USING btree (previous_hash)
 
 
 --
--- TOC entry 1813 (class 1259 OID 18959)
+-- TOC entry 1815 (class 1259 OID 18959)
 -- Dependencies: 1517 1517
 -- Name: fki_tx_id_previous_out_fkey; Type: INDEX; Schema: public; Owner: pident; Tablespace: 
 --
@@ -224,7 +243,7 @@ CREATE INDEX fki_tx_id_previous_out_fkey ON tx_in USING btree (previous_out, n);
 
 
 --
--- TOC entry 1814 (class 1259 OID 18965)
+-- TOC entry 1816 (class 1259 OID 18965)
 -- Dependencies: 1517 1517
 -- Name: fki_tx_in_previous_out_fkey; Type: INDEX; Schema: public; Owner: pident; Tablespace: 
 --
@@ -233,7 +252,7 @@ CREATE INDEX fki_tx_in_previous_out_fkey ON tx_in USING btree (previous_out, pre
 
 
 --
--- TOC entry 1809 (class 1259 OID 18343)
+-- TOC entry 1811 (class 1259 OID 18343)
 -- Dependencies: 1515
 -- Name: transactions_idx_block; Type: INDEX; Schema: public; Owner: pident; Tablespace: 
 --
@@ -242,7 +261,7 @@ CREATE INDEX transactions_idx_block ON transactions USING btree (block);
 
 
 --
--- TOC entry 1810 (class 1259 OID 17981)
+-- TOC entry 1812 (class 1259 OID 17981)
 -- Dependencies: 1515
 -- Name: transactions_idx_txid; Type: INDEX; Schema: public; Owner: pident; Tablespace: 
 --
@@ -251,7 +270,7 @@ CREATE INDEX transactions_idx_txid ON transactions USING btree (transaction_id);
 
 
 --
--- TOC entry 1817 (class 1259 OID 19606)
+-- TOC entry 1819 (class 1259 OID 19606)
 -- Dependencies: 1518
 -- Name: tx_out_address_idx; Type: INDEX; Schema: public; Owner: pident; Tablespace: 
 --
@@ -260,8 +279,8 @@ CREATE INDEX tx_out_address_idx ON tx_out USING btree (address);
 
 
 --
--- TOC entry 1820 (class 2606 OID 19572)
--- Dependencies: 1805 1514 1514
+-- TOC entry 1822 (class 2606 OID 19572)
+-- Dependencies: 1514 1514 1807
 -- Name: blocks_previous_hash_fkey; Type: FK CONSTRAINT; Schema: public; Owner: pident
 --
 
@@ -270,8 +289,8 @@ ALTER TABLE ONLY blocks
 
 
 --
--- TOC entry 1821 (class 2606 OID 17976)
--- Dependencies: 1805 1514 1515
+-- TOC entry 1823 (class 2606 OID 17976)
+-- Dependencies: 1514 1515 1807
 -- Name: transactions_fkey_block; Type: FK CONSTRAINT; Schema: public; Owner: pident
 --
 
@@ -280,8 +299,8 @@ ALTER TABLE ONLY transactions
 
 
 --
--- TOC entry 1822 (class 2606 OID 18348)
--- Dependencies: 1517 1515 1811
+-- TOC entry 1824 (class 2606 OID 18348)
+-- Dependencies: 1517 1515 1813
 -- Name: tx_id_transaction_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: pident
 --
 
@@ -290,8 +309,8 @@ ALTER TABLE ONLY tx_in
 
 
 --
--- TOC entry 1823 (class 2606 OID 18960)
--- Dependencies: 1518 1818 1518 1517 1517
+-- TOC entry 1825 (class 2606 OID 18960)
+-- Dependencies: 1820 1517 1517 1518 1518
 -- Name: tx_in_previous_out_fkey; Type: FK CONSTRAINT; Schema: public; Owner: pident
 --
 
@@ -300,8 +319,8 @@ ALTER TABLE ONLY tx_in
 
 
 --
--- TOC entry 1824 (class 2606 OID 18359)
--- Dependencies: 1811 1518 1515
+-- TOC entry 1826 (class 2606 OID 18359)
+-- Dependencies: 1518 1515 1813
 -- Name: tx_out_transaction_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: pident
 --
 
@@ -310,7 +329,7 @@ ALTER TABLE ONLY tx_out
 
 
 --
--- TOC entry 1829 (class 0 OID 0)
+-- TOC entry 1831 (class 0 OID 0)
 -- Dependencies: 5
 -- Name: public; Type: ACL; Schema: -; Owner: postgres
 --
@@ -321,7 +340,7 @@ GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
--- Completed on 2011-07-09 14:52:59 CEST
+-- Completed on 2011-07-11 14:08:34 CEST
 
 --
 -- PostgreSQL database dump complete

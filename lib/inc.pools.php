@@ -6,6 +6,9 @@
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://sam.zoy.org/wtfpl/COPYING for more details. */
 
+const BLOCK_HASHES = 1; /* Function returns block hashes */
+const BLOCK_NUMBERS = 2; /* Function returns block numbers */
+
 function curl_get_uri($uri) {
 	$c = curl_init($uri);
 	curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
@@ -59,7 +62,7 @@ $foundBy = array(
 		$p .= curl_get_uri('https://deepbit.net/stats/'.$matches[1][0]);
 
 		preg_match_all("%href='http://blockexplorer.com/block/([0-9a-f]{64})'%", $p, $matches);
-		return $matches[1];
+		return array(BLOCK_HASHES, $matches[1]);
 	},
 	'MtRed' => function() {
 		$login = curl_get_uri($lUri = 'https://mtred.com/user/login.html');
@@ -97,72 +100,47 @@ $foundBy = array(
 			$hashs[] = bits2hex($r[0]);
 		}
 
-		return $hashs;
+		return array(BLOCK_HASHS, $hashs);
 	},
 	'BTCGuild' => function() {
 		$main = curl_get_uri('https://www.btcguild.com/blocks.php');
 		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $main, $blocksN);
 
-		$blocks = array();
-		foreach($blocksN[1] as $bN) {
-			$blk = json_decode(shell_exec('bitcoind getblockbycount '.$bN), true);
-			$blocks[] = $blk['hash'];
-		}
-
-		return $blocks;
+		return array(BLOCK_NUMBERS, $blocksN[1]);
 	},
 	'Bitcoins.lc' => function() {
 		$main = curl_get_uri('http://www.bitcoins.lc/round-information');
 		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $main, $blocksN);
 
-		$blocks = array();
-		foreach($blocksN[1] as $bN) {
-			$blk = json_decode(shell_exec('bitcoind getblockbycount '.$bN), true);
-			$blocks[] = $blk['hash'];
-		}
-
-		return $blocks;
+		return array(BLOCK_NUMBERS, $blocksN[1]);
 	},
 	'Mineco.in' => function() {
 		$main = curl_get_uri('https://mineco.in/blocks');
 		preg_match_all("%href=\"http://blockexplorer.com/block/([0-9a-f]{64})\"%", $main, $matches);
-		return $matches[1];
+		return array(BLOCK_HASHES, $matches[1]);
 	},
 	'Ozco.in' => function() {
 		$main = curl_get_uri('https://ozco.in/blocks.php');
 		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $main, $blocksN);
 
-		$blocks = array();
-		foreach($blocksN[1] as $bN) {
-			$blk = json_decode(shell_exec('bitcoind getblockbycount '.$bN), true);
-			$blocks[] = $blk['hash'];
-		}
-
-		return $blocks;
+		return array(BLOCK_NUMBERS, $blocksN[1]);
 	},
 	'Slush' => function() {
 		$main = curl_get_uri('http://mining.bitcoin.cz/stats/');
 		preg_match_all('%href=\'http://blockexplorer.com/block/([0-9a-f]{64})\'%', $main, $matches);
-		return $matches[1];
+		return array(BLOCK_HASHS, $matches[1]);
 	},
 	'Eligius' => function() {
 		$main = curl_get_uri('http://eligius.st/~artefact2/blocks/');
 		preg_match_all('%title="([0-9a-fA-F]{64})"%', $main, $matches);
-		return array_map('strtolower', $matches[1]);
+		return array(BLOCK_HASHS, array_map('strtolower', $matches[1]));
 	},
 	'BTCMine' => function() {
 		$main = curl_get_uri('http://btcmine.com/stats/');
 		$main = str_replace(array(' ', "\n"), '', $main);
 		preg_match_all('%<trclass="(even|odd)"><td>[0-9]+</td><td>([0-9]+)</td>%', $main, $matches);
-		$blocksN = $matches[2];
 
-		$blocks = array();
-		foreach($blocksN as $bN) {
-			$blk = json_decode(shell_exec('bitcoind getblockbycount '.$bN), true);
-			$blocks[] = $blk['hash'];
-		}
-
-		return $blocks;
+		return array(BLOCK_NUMBERS, $matches[2]);
 	},
 	'Bitcoinpool' => function() {
 		$main = curl_get_uri('http://www.bitcoinpool.com/index.php?do=blocks');
@@ -170,12 +148,12 @@ $foundBy = array(
 		$main = preg_replace('%<tr.+Invalid</td></tr>%U', '', $main);
 		preg_match_all('%<aclass="clink".+>([0-9]+)</a></td>%U', $main, $matches);
 
-		$blocks = array();
-		foreach($matches[1] as $bN) {
-			$blk = json_decode(shell_exec('bitcoind getblockbycount '.$bN), true);
-			$blocks[] = $blk['hash'];
-		}
+		return array(BLOCK_NUMBERS, $matches[1]);
+	},
+	'ArsBitcoin' => function() {
+		$main = curl_get_uri('https://arsbitcoin.com/blocks.php');
+		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $main, $blocksN);
 
-		return $blocks;
+		return array(BLOCK_NUMBERS, $blocksN[1]);
 	},
 );

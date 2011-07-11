@@ -12,11 +12,19 @@ require __DIR__.'/lib/inc.main.php';
 @unlink('cookies.txt');
 
 foreach($foundBy as $pool => $callback) {
-	$in = call_user_func($callback);
+	list($type, $in) = call_user_func($callback);
 	if(count($in) == 0) continue;
 
-	$in = array_map(function($h) { return "B'".hex2bits($h)."'"; }, $in);
-	$in = implode(',', $in);
+	if($type == BLOCK_NUMBERS) {
+		$in = implode(',', $in);
+		$in = "number IN ($in)";
+	} else if($type == BLOCK_HASHS) {
+		$in = implode(',', array_map(function($h) { return "B'".hex2bits($h)."'"; }, $in));
+		$in = "hash IN ($in)";
+	} else {
+		/* WTF? */
+		continue;
+	}
 
-	pg_query("UPDATE blocks SET found_by = '$pool' WHERE hash IN ($in)");
+	pg_query("UPDATE blocks SET found_by = '$pool' WHERE $in");
 }

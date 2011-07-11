@@ -10,7 +10,7 @@ require __DIR__.'/lib/inc.main.php';
 
 $txid = @array_pop(explode('/', $_SERVER['REQUEST_URI']));
 
-list($block, $time, $foundBy, $transactions) = fetchTransactions(null, $txid);
+list($block, $time, $blockNum, $foundBy, $transactions) = fetchTransactions(null, $txid);
 list($totalGenerated, $transactionsHTML) = formatTransactionsTable($transactions);
 
 

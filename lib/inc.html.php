@@ -316,14 +316,15 @@ $rows
 }
 
 function formatPools() {
-	$start = time() - ($rDuration = $GLOBALS['conf']['maximum_backlog']);
-	$duration = prettyDuration($rDuration);
+	$backlog = $GLOBALS['conf']['maximum_backlog'];
+	$threshold = pg_fetch_row(pg_query('SELECT MAX(number) FROM blocks;'));
+	$threshold = $threshold[0] - $backlog;
 
 	$req = pg_query("
-	SELECT found_by, COUNT(hash), MIN(time)
+	SELECT found_by, COUNT(hash), MIN(number)
 	FROM blocks
 	WHERE found_by IS NOT NULL
-	AND time >= $start
+	AND number >= $threshold
 	GROUP BY found_by
 	ORDER BY found_by ASC
 	");
@@ -336,12 +337,16 @@ function formatPools() {
 		$count = $r[1];
 		$prettyPool = prettyPool($pool);
 
-		$lag = ($r[2] - $start) / $rDuration;
+		$lag = ($r[2] - $threshold) / $backlog;
 		if($lag > 0.2) $info = ' <span title="We do not have enough data over this timespan to give an accurate result. This will solve itself after some time.">(inaccurate)</span>';
 		else $info = '';
 
+		$prop = $r[1] / max($backlog - ($r[2] - $threshold), 120);
+		$prop = '~'.number_format(100 * $prop, 1).' %';
+
 		$rows .= "<td>$prettyPool</td>\n";
 		$rows .= "<td><a href='/pool/$pool'>$count</a>$info</td>\n";
+		$rows .= "<td>$prop$info</td>\n";
 
 		$rows .= "</tr>\n";
 	}
@@ -350,7 +355,8 @@ function formatPools() {
 <thead>
 <tr>
 <th>Pool</th>
-<th>Blocks found in the last $duration</th>
+<th>Blocks found recently</th>
+<th>Pool size <small>(relative to the whole network)</small></th>
 </tr>
 </thead>
 <tbody>

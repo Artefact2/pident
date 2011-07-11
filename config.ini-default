@@ -3,11 +3,11 @@
 ; Connection string used to connect to the PostgreSQL database.
 postgresql_connection_string = "host=127.0.0.1 port=5432 dbname=pident user=pident password=pident"
 
-; Maximum age of blocks to include in score calculations.
-maximum_backlog = 2419200
+; Number of blocks to include in score calculations.
+maximum_backlog = 4096
 
 ; Magic constant. Decreasing it will make recent blocks count more in score calculations.
-tau = 1209600
+tau = 2048
 
 ; Use this user-agent when fetching some webpages. Use yours if you want.
 ; If you find out they banned your because of this, there is a list of common user agents here :
@@ -17,3 +17,6 @@ user_agent = "Mozilla/5.0 (X11; Linux i686) AppleWebKit/534.30 (KHTML, like Geck
 ; Fill these if you want to enable MtRed support.
 mtred[username] = ""
 mtred[password] = ""
+
+; Fill this if you want EMC support.
+eclipsemc_apikey = ""

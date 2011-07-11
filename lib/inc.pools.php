@@ -65,6 +65,10 @@ $foundBy = array(
 		return array(BLOCK_HASHES, $matches[1]);
 	},
 	'MtRed' => function() {
+		if(!$GLOBALS['conf']['mtred']['username'] || !$GLOBALS['conf']['mtred']['password']) {
+			return array(-1, array());
+		}
+
 		$login = curl_get_uri($lUri = 'https://mtred.com/user/login.html');
 		preg_match_all('%<input type="hidden" value="([^"]+)" name="YII_CSRF_TOKEN" />%', $login, $matches);
 
@@ -161,5 +165,18 @@ $foundBy = array(
 		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $main, $blocksN);
 
 		return array(BLOCK_NUMBERS, $blocksN[1]);
+	},
+	'EclipseMC' => function() {
+		if(!($api = $GLOBALS['conf']['eclipsemc_apikey'])) {
+			return array(-1, array());
+		}
+
+		$json = json_decode(curl_get_uri("https://eclipsemc.com/api.php?key=$api&action=blockstats"), true);
+		$blocks = array();
+		foreach($json['blocks'] as $blk) {
+			$blocks[] = $blk['id'];
+		}
+
+		return array(BLOCK_NUMBERS, $blocks);
 	},
 );

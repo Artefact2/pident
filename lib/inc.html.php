@@ -321,7 +321,7 @@ function formatPools() {
 	$threshold = $threshold[0] - $backlog;
 
 	$req = pg_query("
-	SELECT found_by, COUNT(hash), MIN(number)
+	SELECT found_by, COUNT(hash), MIN(number), MAX(number)
 	FROM blocks
 	WHERE found_by IS NOT NULL
 	AND number >= $threshold
@@ -338,15 +338,18 @@ function formatPools() {
 		$prettyPool = prettyPool($pool);
 
 		$lag = ($r[2] - $threshold) / $backlog;
-		if($lag > 0.2) $info = ' <span title="We do not have enough data over this timespan to give an accurate result. This will solve itself after some time.">(inaccurate)</span>';
+		$endLag = ($r[3] - $threshold) / $backlog;
+		if($lag > 0.2 || $endLag < 0.8) $info = ' <span title="We do not have enough data over this timespan to give an accurate result. This will solve itself after some time.">(inaccurate)</span>';
 		else $info = '';
 
-		$prop = $r[1] / max($backlog - ($r[2] - $threshold), 120);
-		$prop = '~'.number_format(100 * $prop, 1).' %';
+		$mtbb = ($r[3] - $r[2]) / $r[1];
+		$prop = $r[1] / max($r[3] - $r[2] + $mtbb, 120);
+		$opacity = round(1 - cos($prop * M_PI), 2);
+		$prop = ($info ? '~' : '').number_format(100 * $prop, 1).' %';
 
 		$rows .= "<td>$prettyPool</td>\n";
 		$rows .= "<td><a href='/pool/$pool'>$count</a>$info</td>\n";
-		$rows .= "<td>$prop$info</td>\n";
+		$rows .= "<td><span class='pool prop' style='background-color: rgba(255, 255, 127, $opacity);'>$prop</span></td>\n";
 
 		$rows .= "</tr>\n";
 	}

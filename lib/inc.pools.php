@@ -104,7 +104,7 @@ $foundBy = array(
 			$hashs[] = bits2hex($r[0]);
 		}
 
-		return array(BLOCK_HASHS, $hashs);
+		return array(BLOCK_HASHES, $hashs);
 	},
 	'BTCGuild' => function() {
 		$main = curl_get_uri('https://www.btcguild.com/blocks.php');
@@ -132,12 +132,12 @@ $foundBy = array(
 	'Slush' => function() {
 		$main = curl_get_uri('http://mining.bitcoin.cz/stats/');
 		preg_match_all('%href=\'http://blockexplorer.com/block/([0-9a-f]{64})\'%', $main, $matches);
-		return array(BLOCK_HASHS, $matches[1]);
+		return array(BLOCK_HASHES, $matches[1]);
 	},
 	'Eligius' => function() {
 		$main = curl_get_uri('http://eligius.st/~artefact2/blocks/');
 		preg_match_all('%title="([0-9a-fA-F]{64})"%', $main, $matches);
-		return array(BLOCK_HASHS, array_map('strtolower', $matches[1]));
+		return array(BLOCK_HASHES, array_map('strtolower', $matches[1]));
 	},
 	'BTCMine' => function() {
 		$main = curl_get_uri('http://btcmine.com/stats/');

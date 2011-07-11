@@ -15,7 +15,7 @@ function fetchAddressTransactions($hash160) {
 	JOIN transactions ON transactions.transaction_id = tx_out.transaction_id
 	JOIN blocks ON transactions.block = blocks.hash
 	WHERE address = B'$bits'
-	ORDER BY time ASC
+	ORDER BY number ASC
 	LIMIT 1
 	";
 	$req = pg_query($req);
@@ -28,28 +28,32 @@ function fetchAddressTransactions($hash160) {
 	$firstBlock = bits2hex($r[1]);
 
 	$req = "
-	SELECT transaction_id, address_from, amount, block
+	SELECT transaction_id, address_from, amount, block, number
 	FROM address_from
 	WHERE address = B'$bits'
+	ORDER BY number ASC
 	";
 	$in = array();
 	$req = pg_query($req);
 	while($r = pg_fetch_row($req)) {
 		$in[$r[0]]['amount'] = $r[2];
 		$in[$r[0]]['block'] = bits2hex($r[3]);
+		$in[$r[0]]['blockNumber'] = $r[4];
 		if($r[1]) $in[$r[0]]['addresses'][$r[1]] = true;
 	}
 
 	$req = "
-	SELECT transaction_id, address_to, amount, block, transaction_id_from
+	SELECT transaction_id, address_to, amount, block, transaction_id_from, number
 	FROM address_to
 	WHERE address = B'$bits'
+	ORDER BY number ASC
 	";
 	$out = array();
 	$req = pg_query($req);
 	while($r = pg_fetch_row($req)) {
 		$out[$r[0]]['amount'][$r[4]] = $r[2];
 		$out[$r[0]]['block'] = bits2hex($r[3]);
+		$out[$r[0]]['blockNumber'] = $r[5];
 		$out[$r[0]]['addresses'][$r[1]] = true;
 	}
 
@@ -205,7 +209,7 @@ function formatAddressTransactions($data, $in = true) {
 	$cols = "<tr>
 <th>#</th>
 <th>Transaction id</th>
-<th>Block</th>
+<th colspan='2'>&#9650; Block</th>
 <th>$label</th>
 <th>Amount</th>
 </tr>";
@@ -215,6 +219,7 @@ function formatAddressTransactions($data, $in = true) {
 	foreach($data as $id => $tx) {
 		$id = bits2hex($id);
 		$block = $tx['block'];
+		$blockNum = $tx['blockNumber'];
 		$addresses = isset($tx['addresses']) ? $tx['addresses'] : array();
 		
 		if($in) {
@@ -236,6 +241,7 @@ function formatAddressTransactions($data, $in = true) {
 		echo "<tr id='$prefix$id'>\n";
 		echo "<td><a href='#$prefix$id'>#</a></td>\n";
 		echo "<td><a href='/tx/$id' title='$id'>".substr($id, 0, 7)."…</a></td>\n";
+		echo "<td><a href='/b/$blockNum'>$blockNum</a></td>\n";
 		echo "<td><a href='/block/$block#$id'>".$block."</a></td>\n";
 		echo "<td>\n".$a."\n</td>\n";
 		echo "<td>\n".formatSatoshi($amount)."\n</td>\n";

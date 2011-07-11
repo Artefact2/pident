@@ -18,7 +18,7 @@ foreach($foundBy as $pool => $callback) {
 	if($type == BLOCK_NUMBERS) {
 		$in = implode(',', $in);
 		$in = "number IN ($in)";
-	} else if($type == BLOCK_HASHS) {
+	} else if($type == BLOCK_HASHES) {
 		$in = implode(',', array_map(function($h) { return "B'".hex2bits($h)."'"; }, $in));
 		$in = "hash IN ($in)";
 	} else {

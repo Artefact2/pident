@@ -156,4 +156,10 @@ $foundBy = array(
 
 		return array(BLOCK_NUMBERS, $blocksN[1]);
 	},
+	'BitPit' => function() {
+		$main = curl_get_uri('https://pool.bitp.it/rounds');
+		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $main, $blocksN);
+
+		return array(BLOCK_NUMBERS, $blocksN[1]);
+	},
 );

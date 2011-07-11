@@ -281,7 +281,7 @@ function formatRecentBlocks($n, $foundBy = null) {
 	");
 
 	$cols = "<tr>
-<th>When</th>
+<th title='Do not trust this value, it is based on the local time of the node which found the block.'><span>When</span></th>
 <th colspan='2'>&#9660; Block</th>
 <th>Found by</th>
 </tr>";
@@ -337,10 +337,11 @@ function formatPools() {
 		$prettyPool = prettyPool($pool);
 
 		$lag = ($r[2] - $start) / $rDuration;
-		if($lag > 0.2) $count .= ' (inaccurate)';
+		if($lag > 0.2) $info = ' <span title="We do not have enough data over this timespan to give an accurate result. This will solve itself after some time.">(inaccurate)</span>';
+		else $info = '';
 
 		$rows .= "<td>$prettyPool</td>\n";
-		$rows .= "<td><a href='/pool/$pool'>$count</a></td>\n";
+		$rows .= "<td><a href='/pool/$pool'>$count</a>$info</td>\n";
 
 		$rows .= "</tr>\n";
 	}

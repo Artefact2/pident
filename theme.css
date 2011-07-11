@@ -44,7 +44,7 @@ a:visited {
 	color: #002266;
 }
 
-tr[title] > span, th[title] > span {
+*[title] > span, span[title] {
 	border-bottom: 1px dotted black;
 }
 

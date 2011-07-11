@@ -94,7 +94,7 @@ echo "<!DOCTYPE html>
 <li>Previous block: $previous</li>
 <li>Next block(s):  $next</li>
 <li>Generated BTC: $totalGenerated (includes transaction fees)</li>
-<li>Found at: $time UTC</li>
+<li title='Do not trust this value, it is based on the local time of the node which found the block.'><span>Found at: $time UTC</span></li>
 <li>Found by: $foundBy</li>
 </ul>
 $transactionsHTML

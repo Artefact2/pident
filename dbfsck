@@ -11,8 +11,8 @@ require __DIR__.'/lib/inc.main.php';
 
 // Try to fix blocks who have no inputs, yet more than 1 transaction
 $req = "
-SELECT hash
-FROM blocks, number
+SELECT hash, number
+FROM blocks
 JOIN blocks_num_transactions ON blocks_num_transactions.block = blocks.hash
 LEFT JOIN blocks_num_inputs ON blocks_num_inputs.block = blocks.hash
 WHERE num_inputs IS NULL 

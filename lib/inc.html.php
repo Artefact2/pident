@@ -86,7 +86,7 @@ function fetchTransactions($blockHash, $txHash = null) {
 		$req = "
 		SELECT block, time, number
 		FROM transactions
-		LEFT JOIN blocks ON blocks.hash = transactions.block
+		JOIN blocks ON blocks.hash = transactions.block
 		WHERE transaction_id = B'$bits'
 		";
 
@@ -105,7 +105,7 @@ function fetchTransactions($blockHash, $txHash = null) {
 	}
 
 	$req = "
-	SELECT transactions.transaction_id, address, amount
+	SELECT transactions.transaction_id, address, amount, is_payout, n
 	FROM transactions
 	LEFT JOIN tx_out ON tx_out.transaction_id = transactions.transaction_id
 	WHERE $condition
@@ -113,15 +113,15 @@ function fetchTransactions($blockHash, $txHash = null) {
 	$req = pg_query($req);
 	while($r = pg_fetch_row($req)) {
 		$transactions[bits2hex($r[0])]['out'][] = array(
-			Bitcoin::hash160ToAddress(bits2hex($r[1])), $r[2]
+			Bitcoin::hash160ToAddress(bits2hex($r[1])), $r[2], $r[3], $r[4]
 		);
 	}
 
 	$req = "
 	SELECT transactions.transaction_id, tx_out.address, tx_out.amount
 	FROM transactions
-	LEFT JOIN tx_in ON tx_in.transaction_id = transactions.transaction_id
-	LEFT JOIN tx_out ON tx_out.transaction_id = tx_in.previous_out AND tx_out.n = tx_in.previous_n
+	JOIN tx_in ON tx_in.transaction_id = transactions.transaction_id
+	JOIN tx_out ON tx_out.transaction_id = tx_in.previous_out AND tx_out.n = tx_in.previous_n
 	WHERE $condition
 	";
 	$req = pg_query($req);
@@ -149,7 +149,11 @@ function formatTransactionsTable($transactions) {
 		echo "<tr id='$id'>\n";
 		echo "<td><a href='#$id'>#</a></td>\n";
 
-		usort($tx['in'], $cmp = function($a, $b) { return bccomp($b[1], $a[1]); });	usort($tx['out'], $cmp);
+		$cmp = function($a, $b) { return bccomp($b[1], $a[1]); };
+		if(isset($tx['in']) && is_array($tx['in'])) usort($tx['in'], $cmp);
+		else $tx['in'] = array();
+		if(isset($tx['out']) && is_array($tx['out'])) usort($tx['out'], $cmp);
+		else $tx['out'] = array();
 
 		$fee = "0";
 		$a = array();
@@ -161,7 +165,7 @@ function formatTransactionsTable($transactions) {
 			$a[] = "<a href='/address/$address#out_$id'>$address</a>: $amount";
 		}
 		foreach($tx['out'] as $d) {
-			list($address, $amount) = $d;
+			list($address, $amount, $isPayout) = $d;
 			if($address == '') $address = '<em>&ltsome address?&gt;</em>';
 			$fee = bcsub($fee, $amount);
 			$amount = formatSatoshi($amount);
@@ -267,7 +271,7 @@ $rows
 ";
 }
 
-function formatRecentBlocks($n, $foundBy = null) {
+function formatRecentBlocks($n, $foundBy = null, $recentScores = 8) {
 	if($foundBy !== null) {
 		$cond = "found_by = '$foundBy'";
 	} else $cond = 'true';
@@ -284,19 +288,54 @@ function formatRecentBlocks($n, $foundBy = null) {
 <th title='Do not trust this value, it is based on the local time of the node which found the block.'><span>When</span></th>
 <th colspan='2'>&#9660; Block</th>
 <th>Found by</th>
+<th>See scores</th>
 </tr>";
 
 	$rows = '';
 	$now = time();
+	$i = 0;
+	$blacklist = array();
 	while($r = pg_fetch_row($req)) {
 		$block = bits2hex($r[0]);
 		$blkNum = $r[3];
 		$rows .= "<tr>\n";
 
+		$pool = prettyPool($r[2]);
+		if($i++ < $recentScores && $pool == 'N/A') {
+			list($avgs, $scores, $normalized) = fetchScores($block);
+			$v = array_values($normalized);
+			$p = array_keys($normalized);
+
+			if(count($v) == 0) {
+				$v = array(0);
+				$p = array('N/A');
+			}
+
+			if(isset($blacklist[$p[0]])) {
+				// Ignore it
+			} else if($v[0] > 1.3) {
+				$label = 'Certainely';
+			} else if($v[0] > 0.9) {
+				$label = 'Probably';
+			} else if($v[0] > 0.7) {
+				$label = 'Maybe';
+			}
+
+			if(isset($label)) {
+				$pool = "<a href='/score/$block'>$label</a> ".prettyPool($p[0]);
+			} else {
+				$pool = "<a href='/score/$block'>N/A</a>";
+			}
+			unset($label);
+		} else {
+			$blacklist[$r[2]] = true;
+		}
+
 		$rows .= "<td>".prettyDuration($now - $r[1], 2)." ago</td>\n";
 		$rows .= "<td><a href='/b/$blkNum'>$blkNum</a></td>";
 		$rows .= "<td><a href='/block/$block'>$block</a></td>\n";
-		$rows .= "<td>".prettyPool($r[2])."</td>\n";
+		$rows .= "<td>$pool</td>\n";
+		$rows .= "<td><a href='/score/$block'>Scores</a></td>\n";
 
 		$rows .= "</tr>\n";
 	}
@@ -360,6 +399,64 @@ function formatPools() {
 <th>Pool</th>
 <th>Blocks found recently</th>
 <th>Pool size <small>(relative to the whole network)</small></th>
+</tr>
+</thead>
+<tbody>
+$rows
+</tbody>
+</table>
+";
+}
+
+function fetchScores($block) {
+	static $avgs = null;
+	if($avgs === null) {
+		$req = pg_query('SELECT pool, average_score FROM scores_pool_averages;');
+		$avgs = array();
+		while($r = pg_fetch_row($req)) {
+			$avgs[$r[0]] = $r[1];
+		}
+	}
+
+	$bits = hex2bits($block);
+	$req = pg_query("SELECT pool, score_total FROM scores_blocks WHERE block = B'$bits'");
+	$scores = array();
+	while($r = pg_fetch_row($req)) {
+		$scores[$r[0]] = $r[1];
+	}
+
+	$normalized = array();
+	foreach($scores as $pool => $score) {
+		$normalized[$pool] = isset($avgs[$pool]) ? ($scores[$pool] / $avgs[$pool]) : -1;
+	}
+
+	arsort($normalized);
+
+	return array($avgs, $scores, $normalized);
+}
+
+function formatScores($block) {
+	list($avgs, $scores, $normalized) = fetchScores($block);
+
+	$rows = '';
+	foreach($normalized as $pool => $nScore) {
+		$rows .= "<tr>\n";
+
+		$rows .= "<td>".prettyPool($pool)."</td>\n";
+		$rows .= "<td>".($nScore >= 0 ? number_format($nScore, 3) : 'N/A')."</td>\n";
+		$rows .= "<td>".number_format($scores[$pool], 3)."</td>\n";
+		$rows .= "<td>".(isset($avgs[$pool]) ? number_format($avgs[$pool], 3) : 'N/A')."</td>\n";
+
+		$rows .= "</tr>\n";
+	}
+	
+	return "<table>
+<thead>
+<tr>
+<th>Pool</th>
+<th>&#9660; Normalized score</th>
+<th>Raw score</th>
+<th>Average score of found blocks</th>
 </tr>
 </thead>
 <tbody>

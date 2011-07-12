@@ -1,2 +1,5 @@
 config.ini
 cookies.txt
+
+cache/*
+!cache/.htaccess

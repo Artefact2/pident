@@ -11,7 +11,14 @@ require __DIR__.'/lib/inc.main.php';
 
 @unlink('cookies.txt');
 
+$c = count($foundBy);
+$cL = strlen($c);
+$i = 0;
 foreach($foundBy as $pool => $callback) {
+	++$i;
+	$fI = str_pad($i, $cL, '0', STR_PAD_LEFT);
+	echo "\r$fI/$c fetched...";
+
 	list($type, $in) = call_user_func($callback);
 	if(count($in) == 0) continue;
 
@@ -22,9 +29,66 @@ foreach($foundBy as $pool => $callback) {
 		$in = implode(',', array_map(function($h) { return "B'".hex2bits($h)."'"; }, $in));
 		$in = "hash IN ($in)";
 	} else {
-		/* WTF? */
+		// WTF ?
 		continue;
 	}
 
 	pg_query("UPDATE blocks SET found_by = '$pool' WHERE $in");
+}
+
+echo "\n";
+
+$latestNum = pg_fetch_row(pg_query("SELECT MAX(number) FROM blocks;"));
+$latestNum = $latestNum[0];
+
+$identified = cacheFetch('blocks_identified', $success);
+if(!$success) $identified = array();
+
+$threshold = $latestNum - $GLOBALS['conf']['maximum_backlog'];
+$mostRecentQ = pg_query("
+SELECT found_by AS pool, MAX(number) AS most_recent
+FROM blocks
+WHERE number >= $threshold
+GROUP BY found_by
+");
+$mostRecent = array();
+while($r = pg_fetch_row($mostRecentQ)) {
+	$mostRecent[$r[0]] = $r[1];
+}
+
+$toIdentify = pg_query("
+SELECT hash, number, found_by
+FROM blocks
+WHERE number >= $threshold
+AND found_by IS NOT NULL
+ORDER BY number ASC
+");
+
+$c = $latestNum;
+$cL = strlen($latestNum);
+while($r = pg_fetch_row($toIdentify)) {
+	$fI = str_pad($r[1], $cL, '0', STR_PAD_LEFT);
+	echo "\r$fI/$c identified...";
+
+	$hash = bits2hex($r[0]);
+	$pool = $r[2];
+
+	if(isset($identified[$hash]) && $identified[$hash]) continue;
+	if(!isset($identifyPayouts[$pool])) continue;
+
+	pg_query("
+	UPDATE tx_out SET is_payout = false
+	FROM transactions
+	WHERE transactions.transaction_id = tx_out.transaction_id
+	AND block = B'".$r[0]."'
+	");
+
+	call_user_func($identifyPayouts[$pool], $hash);
+
+	$identified[$hash] = true;
+}
+
+if(isset($hash)) {
+	cacheStore('blocks_identified', $identified);
+	echo "\n";
 }

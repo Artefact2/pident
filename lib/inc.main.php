@@ -24,6 +24,7 @@ pident (Artefact2)
 </footer>';
 const VERSION = '0.2';
 
+require __DIR__.'/inc.cache.php';
 require __DIR__.'/inc.bitcoin.php';
 require __DIR__.'/inc.utils.php';
 require __DIR__.'/inc.pools.php';

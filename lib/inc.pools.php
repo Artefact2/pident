@@ -180,3 +180,83 @@ $foundBy = array(
 		return array(BLOCK_NUMBERS, $blocks);
 	},
 );
+
+$identifyPayouts = array(
+	'Eligius' => function($blk) {
+		$bits = hex2bits($blk);
+
+		$genTxId = pg_fetch_row(pg_query("
+		SELECT DISTINCT tx_out.transaction_id
+		FROM tx_out
+		LEFT JOIN transactions ON transactions.transaction_id = tx_out.transaction_id
+		LEFT JOIN tx_in ON tx_in.transaction_id = tx_out.transaction_id
+		WHERE block = B'$bits'
+		AND tx_in.transaction_id IS NULL
+		"));
+
+		$genTxIdBits = $genTxId[0];
+
+		$gen = pg_query("
+		UPDATE tx_out SET is_payout = true
+		WHERE transaction_id = B'$genTxIdBits'
+		AND n <> 0
+		");
+	},
+	'DeepBit' => function($blk) {
+		/*list($block, $time, $number, $foundBy, $transactions) = fetchTransactions($blk, null);
+
+		$payouts = array();
+		foreach($transactions as $id => $tx) {
+			$fee = '0';
+			foreach($tx['in'] as $in) {
+				$fee = bcadd($fee, $in[1], 0);
+			}
+			foreach($tx['out'] as $out) {
+				$fee = bcsub($fee, $out[1], 0);
+			}
+
+			if(bccomp($fee, '0') != 0) continue;
+
+			foreach($tx['out'] as $out) {
+				$n = $out[3];
+				$amount = $out[1];
+				if(bccomp(bcmod($amount, 1000000), '0') == 0) {
+					$payouts[$id][] = $n;
+				}
+			}
+		}
+
+		if(count($payouts) == 0) return;
+
+		$where = array();
+		foreach($payouts as $txId => $ns) {
+			$where[] = "(transaction_id = B'".hex2bits($txId)."' AND n IN (".implode(',', $ns)."))";
+		}
+		$where = implode(' OR ', $where);
+
+		pg_query("
+		UPDATE tx_out SET is_payout = true
+		WHERE $where
+		");*/
+
+		$bits = hex2bits($blk);
+		pg_query("
+		UPDATE tx_out SET is_payout = true
+		FROM transactions
+		WHERE tx_out.transaction_id = transactions.transaction_id
+		AND block = B'$bits'
+		");
+	},
+);
+
+$identifyPayouts['ArsBitcoin'] = $identifyPayouts['DeepBit'];
+$identifyPayouts['BTCGuild'] = $identifyPayouts['DeepBit'];
+$identifyPayouts['BTCMine'] = $identifyPayouts['DeepBit'];
+$identifyPayouts['BitPit'] = $identifyPayouts['DeepBit'];
+$identifyPayouts['Bitcoins.lc'] = $identifyPayouts['DeepBit'];
+$identifyPayouts['EclipseMC'] = $identifyPayouts['DeepBit'];
+$identifyPayouts['Mineco.in'] = $identifyPayouts['DeepBit'];
+$identifyPayouts['MtRed'] = $identifyPayouts['DeepBit'];
+$identifyPayouts['Ozco.in'] = $identifyPayouts['DeepBit'];
+$identifyPayouts['Slush'] = $identifyPayouts['DeepBit'];
+

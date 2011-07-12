@@ -30,5 +30,6 @@ require __DIR__.'/inc.utils.php';
 require __DIR__.'/inc.pools.php';
 require __DIR__.'/inc.score.php';
 require __DIR__.'/inc.html.php';
+require __DIR__.'/inc.update.php';
 
 date_default_timezone_set('UTC');

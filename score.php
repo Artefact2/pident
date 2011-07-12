@@ -23,6 +23,7 @@ echo "<!DOCTYPE html>
 <body>
 <h1>Score <a href='/score/$block'>$block</a></h1>
 <p id='back'><a href='/'>&larr; Back to the main page</a></p>
+<p class='notice'>The scoring feature of pident is still <strong>experimental</strong>. The results are not guaranteed in any way, use at your own risk !</p>
 ";
 
 if(($totalCount[0] - $blockNumber[0]) > $GLOBALS['conf']['tau']) {

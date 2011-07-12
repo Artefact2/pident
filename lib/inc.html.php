@@ -271,7 +271,7 @@ $rows
 ";
 }
 
-function formatRecentBlocks($n, $foundBy = null, $recentScores = 8) {
+function formatRecentBlocks($n, $foundBy = null, $recentScores = 0) {
 	if($foundBy !== null) {
 		$cond = "found_by = '$foundBy'";
 	} else $cond = 'true';

@@ -56,9 +56,14 @@ span.pool {
 	padding-bottom: 0.15em;
 }
 
-p.warning {
+p.warning, p.notice {
 	border: 1px solid red;
 	background-color: rgba(255, 80, 0, 0.4);
 	text-align: center;
 	padding: 1em;
+}
+
+p.notice {
+	border-color: yellow;
+	background-color: rgba(255, 255, 0, 0.4);
 }

@@ -146,10 +146,8 @@ function formatTransactionsTable($transactions) {
 
 	$totalGenerated = null;
 
-	ob_start();
+	$rows = array();
 	foreach($transactions as $id => $tx) {
-		echo "<tr id='$id'>\n";
-		echo "<td><a href='#$id'>#</a></td>\n";
 
 		$cmp = function($a, $b) { return bccomp($b[1], $a[1]); };
 		if(isset($tx['in']) && is_array($tx['in'])) usort($tx['in'], $cmp);
@@ -169,33 +167,38 @@ function formatTransactionsTable($transactions) {
 			list($address, $amount) = $d;
 			$fee = bcadd($fee, $amount);
 			$amount = formatSatoshi($amount);
-			$a[] = "<a href='/address/$address#out_$id'>$address</a>: $amount";
+			$a[] = "<tr>\n<td class='addr'><a href='/address/$address#out_$id'>$address</a></td>\n<td class='amount'>$amount</td>\n</tr>\n";
 		}
 		foreach($tx['out'] as $d) {
 			list($address, $amount, $isPayout) = $d;
 			if($address == '') $address = '<em>&ltsome address?&gt;</em>';
 			$fee = bcsub($fee, $amount);
 			$amount = formatSatoshi($amount);
-			$b[] = "<a href='/address/$address#in_$id'>$address</a>: $amount";
+			$b[] = "<tr>\n<td class='addr'><a href='/address/$address#in_$id'>$address</a></td>\n<td class='amount'>$amount</td>\n</tr>\n";
 		}
 
-		if(bccomp($fee, '0') < 0) {
+		if($generated = (bccomp($fee, '0') < 0)) {
 			$totalGenerated = formatSatoshi(-$fee);
 			$fee = 'N/A';
-			$a = array('Generated BTC: '.$totalGenerated);
+			$a = array("<tr><td>Generated BTC: ".$totalGenerated."</td></tr>");
 		} else $fee = formatSatoshi($fee);
 
-		echo "<td><a href='/tx/$id' title='$id'>".substr($id, 0, 7)."…</a></td>\n";
-		echo "<td>$size</td>\n";
-		echo "<td>".$fee."</td>\n";
+		$row = "<tr id='$id'>\n"
+			."<td><a href='#$id'>#</a></td>\n"
+			."<td><a href='/tx/$id' title='$id'>".substr($id, 0, 14)."…</a></td>\n"
+			."<td>$size</td>\n"
+			."<td>".$fee."</td>\n"
+			."<td class='inout'>\n<table>\n".implode('', $a)."</table>\n</td>\n"
+			."<td class='inout'>\n<table>\n".implode('', $b)."</table>\n</td>\n"
+			."</tr>\n";
 
-		echo "<td>\n".implode("<br />\n", $a)."\n</td>\n";
-		echo "<td>\n".implode("<br />\n", $b)."\n</td>\n";
-
-		echo "</tr>\n";
+		if($generated) {
+			array_unshift($rows, $row);
+		} else {
+			array_push($rows, $row);
+		}
 	}
-
-	$rows = ob_get_clean();
+	$rows = implode('', $rows);
 
 	$code = "<table>
 <thead>

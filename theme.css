@@ -7,10 +7,11 @@ table {
 	border-collapse: collapse;
 }
 
-tr:nth-child(odd) {
+table > tbody > tr:nth-child(odd) {
 	background-color:#F0FFFF;
 }
-tr:nth-child(even) {
+
+table > tbody > tr:nth-child(even) {
 	background-color:#E8FFFF;
 }
 
@@ -33,7 +34,7 @@ p#back {
 }
 
 td, th {
-	padding: 0.5em 1.5em;
+	padding: 0.5em 0.7em;
 }
 
 a {
@@ -66,4 +67,50 @@ p.warning, p.notice {
 p.notice {
 	border-color: yellow;
 	background-color: rgba(255, 255, 0, 0.4);
+}
+
+td.inout {
+	padding: 0;
+}
+
+td.inout > table {
+	width: 100%;
+}
+
+td.inout tr {
+	background-color: rgba(255, 255, 255, 0) !important;
+}
+
+td.inout > table td {
+	border: 0;
+}
+
+td.inout > table td.addr {
+	text-align: left;
+	padding-right: 0;
+}
+
+td.inout > table td.addr:after {
+	content: ":";
+}
+
+td.inout > table td.amount {
+	padding-left: 0;
+	text-align: right;
+}
+
+td.inout > table td.amount:before {
+	content: " ";
+}
+
+td.inout > table tr {
+	border-top: 1px solid #D8FFFF;
+}
+
+td.inout > table tr:first-child {
+	border-top: none;
+}
+
+span.bz {
+	color: #BBB;
 }

@@ -87,7 +87,14 @@ function formatBTC($btc) {
 }
 
 function formatSatoshi($s) {
-	return number_format(bcdiv($s, "100000000", 8), 8);
+	$num = number_format(bcdiv($s, "100000000", 8), 8);
+	$i = 0;
+	$k = strlen($num) - 1;
+	while($i < 6 && $num[$k - $i] == '0') $i += 1;
+	$i -= 1;
+	return substr($num, 0, $k - $i).($i == -1 ? '' : (
+		'<span class="bz">'.substr($num, $k - $i).'</span>'
+	));
 }
 
 function prettyDuration($duration, $precision = 4) {
@@ -162,8 +169,9 @@ function formatCoinbase($coinbase) {
 		$n = ord($ascii[$i]);
 		if($n >= 0x20 && $n <= 0x7F) {
 			$sane .= $ascii[$i];
-		} else $sane .= '&#5987';
+		} else $sane .= '&#5987;';
 	}
 
 	return "<code>$coinbase</code> ($sane)";
 }
+

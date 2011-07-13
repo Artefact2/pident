@@ -151,3 +151,19 @@ function formatSize($b) {
 
 	return round($b, 2).' '.$unit;
 }
+
+function formatCoinbase($coinbase) {
+	$coinbase = substr($coinbase, 2);
+
+	$ascii = pack('H*', $coinbase);
+	$k = strlen($ascii);
+	$sane = '';
+	for($i = 0; $i < $k; ++$i) {
+		$n = ord($ascii[$i]);
+		if($n >= 0x20 && $n <= 0x7F) {
+			$sane .= $ascii[$i];
+		} else $sane .= '&#5987';
+	}
+
+	return "<code>$coinbase</code> ($sane)";
+}

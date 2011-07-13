@@ -57,7 +57,7 @@ function fetchTransactions($blockHash, $txHash = null) {
 
 	if($blockHash) {
 		$req = "
-		SELECT time, found_by, number, size
+		SELECT time, found_by, number, size, coinbase
 		FROM blocks
 		WHERE blocks.hash = B'$bits'
 		";
@@ -73,6 +73,7 @@ function fetchTransactions($blockHash, $txHash = null) {
 		$number = $r[2];
 		$size = $r[3];
 		$block = $blockHash;
+		$coinbase = $r[4];
 
 		$condition = "block = B'$bits'";
 	} else {
@@ -96,6 +97,7 @@ function fetchTransactions($blockHash, $txHash = null) {
 		$foundBy = null;
 		$number = $r[2];
 		$size = $r[3];
+		$coinbase = null;
 
 		$condition = "transactions.transaction_id = B'$bits'";
 	}
@@ -129,7 +131,7 @@ function fetchTransactions($blockHash, $txHash = null) {
 		);
 	}
 
-	return array($block, $time, $number, $foundBy, $size, $transactions);
+	return array($block, $time, $number, $foundBy, $size, $coinbase, $transactions);
 }
 
 function formatTransactionsTable($transactions) {

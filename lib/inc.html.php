@@ -8,25 +8,7 @@
 
 function fetchAddressTransactions($hash160) {
 	$bits = hex2bits($hash160);
-
-	$req = "
-	SELECT time, hash
-	FROM tx_out
-	JOIN transactions ON transactions.transaction_id = tx_out.transaction_id
-	JOIN blocks_transactions ON transactions.transaction_id = blocks_transactions.transaction_id
-	JOIN blocks ON blocks_transactions.block = blocks.hash
-	WHERE address = B'$bits'
-	ORDER BY number ASC
-	LIMIT 1
-	";
-	$req = pg_query($req);
-	$r = pg_fetch_row($req);
-	if($r == false || !isset($r[0])) {
-		header('Content-Type: text/plain', true, 404);
-		die('Address not found. Problem?');
-	}
-	$firstSeen = date('Y-m-d H:i:s', $r[0]);
-	$firstBlock = bits2hex($r[1]);
+	$firstBlock = null;
 
 	$req = "
 	SELECT transaction_id, address_from, amount, block, number
@@ -41,6 +23,15 @@ function fetchAddressTransactions($hash160) {
 		$in[$r[0]]['block'] = bits2hex($r[3]);
 		$in[$r[0]]['blockNumber'] = $r[4];
 		if($r[1]) $in[$r[0]]['addresses'][$r[1]] = true;
+
+		if($firstBlock === null) {
+			$firstBlock = $in[$r[0]]['block'];
+		}
+	}
+
+	if($firstBlock === null) {
+		header('Content-Type: text/plain');
+		die('Address not found. U mad bro?');
 	}
 
 	$req = "
@@ -58,7 +49,7 @@ function fetchAddressTransactions($hash160) {
 		$out[$r[0]]['addresses'][$r[1]] = true;
 	}
 
-	return array($firstSeen, $firstBlock, $in, $out);
+	return array($firstBlock, $in, $out);
 }
 
 function fetchTransactions($blockHash, $txHash = null) {

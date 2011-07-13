@@ -31,18 +31,18 @@ function insertBlock($number, $blk, $forceQueries = false) {
 		$txAlreadyHave[$r[0]] = true;
 	}
 
+	$coinbase = $blk['tx'][0]['in'][0]['coinbase'];
+	$coinbase = "E'\\\\x$coinbase'";
 
 	foreach($blk['tx'] as $tx) {
 		$txId = $txBits[$tx['hash']];
 		if(isset($txAlreadyHave[$txId])) continue;
 
-		$coinbase = "00";
 		$size = $tx['size'];
 		$tx_[] = "(B'$txId', $size)";
 
 		foreach($tx['in'] as $n => $in) {
 			if(isset($in['coinbase'])) {
-				$coinbase = $in['coinbase'];
 				continue;
 			}
 
@@ -71,7 +71,7 @@ function insertBlock($number, $blk, $forceQueries = false) {
 	}
 
 	$block = "INSERT INTO blocks(hash, time, previous_hash, number, coinbase, size)
-	VALUES (B'$blkBits', $time, $prevBits, $number, E'\\\\x$coinbase', $blkSize)";	
+	VALUES (B'$blkBits', $time, $prevBits, $number, $coinbase, $blkSize)";	
 	$block_trans = "INSERT INTO blocks_transactions(block, transaction_id)
 	VALUES ".implode(',', array_map(function($b) use($blkBits) { return "(B'$blkBits', B'$b')"; }, $txBits));
 	if(count($tx_) > 0) {

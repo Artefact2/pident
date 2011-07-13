@@ -188,9 +188,8 @@ $identifyPayouts = array(
 		$genTxId = pg_fetch_row(pg_query("
 		SELECT DISTINCT tx_out.transaction_id
 		FROM tx_out
-		JOIN transactions ON transactions.transaction_id = tx_out.transaction_id
-		JOIN tx_in ON tx_in.transaction_id = tx_out.transaction_id
-		JOIN blocks_transactions ON blocks_transactions.transaction_id = transactions.transaction_id
+		LEFT JOIN tx_in ON tx_in.transaction_id = tx_out.transaction_id
+		JOIN blocks_transactions ON blocks_transactions.transaction_id = tx_out.transaction_id
 		WHERE block = B'$bits'
 		AND tx_in.transaction_id IS NULL
 		"));

@@ -22,8 +22,8 @@ $latest = $latest[0];
 $req = "
 SELECT address, found_by, SUM(EXP(-($latest - number) / $tau))
 FROM blocks
-JOIN transactions ON blocks.hash = transactions.block
-JOIN tx_out ON tx_out.transaction_id = transactions.transaction_id AND tx_out.is_payout = true
+JOIN blocks_transactions ON blocks.hash = blocks_transactions.block
+JOIN tx_out ON tx_out.transaction_id = blocks_transactions.transaction_id AND tx_out.is_payout = true
 WHERE number >= ($latest - $backlog)
 AND found_by IS NOT NULL
 GROUP BY address, found_by

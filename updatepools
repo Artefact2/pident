@@ -78,8 +78,8 @@ while($r = pg_fetch_row($toIdentify)) {
 
 	pg_query("
 	UPDATE tx_out SET is_payout = false
-	FROM transactions
-	WHERE transactions.transaction_id = tx_out.transaction_id
+	FROM blocks_transactions
+	WHERE blocks_transactions.transaction_id = tx_out.transaction_id
 	AND block = B'".$r[0]."'
 	");
 

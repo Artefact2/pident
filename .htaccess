@@ -11,4 +11,3 @@ RewriteRule ^update /dev/null
 RewriteRule ^hacks\.php$ /dev/null
 RewriteRule ^cache /dev/null
 RewriteRule ^schema_postgre\.sql$ /dev/null
-

@@ -40,7 +40,8 @@ if($initialDump) {
 		$blk = json_decode(shell_exec('bitcoind getblockbycount '.$i), true);
 		if(isset($stop[$blk['hash']])) {
 			$start = $i + 1;
-			break;		}
+			break;		
+		}
 	}
 	if(!isset($start)) $start = 0;
 }

@@ -98,7 +98,7 @@ $foundBy = array(
 		foreach($matches[2] as $tx) {
 			$txBits[] = 'B\''.hex2bits($tx).'\'';
 		}
-		$blocks = pg_query('SELECT DISTINCT block FROM transactions WHERE transaction_id IN ('.implode(',', $txBits).')');
+		$blocks = pg_query('SELECT DISTINCT block FROM blocks_transactions WHERE transaction_id IN ('.implode(',', $txBits).')');
 		$hashs = array();
 		while($r = pg_fetch_row($blocks)) {
 			$hashs[] = bits2hex($r[0]);
@@ -188,8 +188,9 @@ $identifyPayouts = array(
 		$genTxId = pg_fetch_row(pg_query("
 		SELECT DISTINCT tx_out.transaction_id
 		FROM tx_out
-		LEFT JOIN transactions ON transactions.transaction_id = tx_out.transaction_id
-		LEFT JOIN tx_in ON tx_in.transaction_id = tx_out.transaction_id
+		JOIN transactions ON transactions.transaction_id = tx_out.transaction_id
+		JOIN tx_in ON tx_in.transaction_id = tx_out.transaction_id
+		JOIN blocks_transactions ON blocks_transactions.transaction_id = transactions.transaction_id
 		WHERE block = B'$bits'
 		AND tx_in.transaction_id IS NULL
 		"));
@@ -242,8 +243,8 @@ $identifyPayouts = array(
 		$bits = hex2bits($blk);
 		pg_query("
 		UPDATE tx_out SET is_payout = true
-		FROM transactions
-		WHERE tx_out.transaction_id = transactions.transaction_id
+		FROM blocks_transactions
+		WHERE tx_out.transaction_id = blocks_transactions.transaction_id
 		AND block = B'$bits'
 		");
 	},

@@ -49,10 +49,11 @@ if(isset($_GET['redirect'])) {
 
 $bits = hex2bits($block);
 
-list($block, $time, $number, $foundBy, $transactions) = fetchTransactions($block, null);
+list($block, $time, $number, $foundBy, $size, $transactions) = fetchTransactions($block, null);
 list($totalGenerated, $transactionsHTML) = formatTransactionsTable($transactions);
 
 $foundBy = prettyPool($foundBy);
+$size = formatSize($size);
 
 $req = "
 SELECT previous_hash
@@ -94,6 +95,7 @@ echo "<!DOCTYPE html>
 <li>Previous block: $previous</li>
 <li>Next block(s):  $next</li>
 <li>Generated BTC: $totalGenerated (includes transaction fees)</li>
+<li>Block size: $size</li>
 <li title='Do not trust this value, it is based on the local time of the node which found the block.'><span>Found at: $time UTC</span></li>
 <li>Found by: $foundBy</li>
 </ul>

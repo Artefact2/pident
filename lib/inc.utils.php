@@ -140,3 +140,14 @@ function extractColor($seed, $min = 0, $max = 256) {
 		return "rgb($red, $green, $blue)";
 	} else return extractColor($seed, $min, $max);
 }
+
+function formatSize($b) {
+	if($b >= 10000) {
+		$b /= 1000;
+		$unit = 'kB';
+	} else {
+		$unit = 'bytes';
+	}
+
+	return round($b, 2).' '.$unit;
+}

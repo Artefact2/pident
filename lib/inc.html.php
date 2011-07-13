@@ -13,7 +13,8 @@ function fetchAddressTransactions($hash160) {
 	SELECT time, hash
 	FROM tx_out
 	JOIN transactions ON transactions.transaction_id = tx_out.transaction_id
-	JOIN blocks ON transactions.block = blocks.hash
+	JOIN blocks_transactions ON transactions.transaction_id = blocks_transactions.transaction_id
+	JOIN blocks ON blocks_transactions.block = blocks.hash
 	WHERE address = B'$bits'
 	ORDER BY number ASC
 	LIMIT 1
@@ -65,7 +66,7 @@ function fetchTransactions($blockHash, $txHash = null) {
 
 	if($blockHash) {
 		$req = "
-		SELECT time, found_by, number
+		SELECT time, found_by, number, size
 		FROM blocks
 		WHERE blocks.hash = B'$bits'
 		";
@@ -79,15 +80,18 @@ function fetchTransactions($blockHash, $txHash = null) {
 		$time = date('Y-m-d H:i:s', $r[0]);
 		$foundBy = $r[1];
 		$number = $r[2];
+		$size = $r[3];
 		$block = $blockHash;
 
 		$condition = "block = B'$bits'";
 	} else {
 		$req = "
-		SELECT block, time, number
-		FROM transactions
-		JOIN blocks ON blocks.hash = transactions.block
+		SELECT block, time, number, blocks.size
+		FROM blocks_transactions
+		JOIN blocks ON blocks_transactions.block= blocks.hash
 		WHERE transaction_id = B'$bits'
+		ORDER BY blocks.number ASC
+		LIMIT 1
 		";
 
 		$req = pg_query($req);
@@ -100,26 +104,29 @@ function fetchTransactions($blockHash, $txHash = null) {
 		$time = date('Y-m-d H:i:s', $r[1]);
 		$foundBy = null;
 		$number = $r[2];
+		$size = $r[3];
 
 		$condition = "transactions.transaction_id = B'$bits'";
 	}
 
 	$req = "
-	SELECT transactions.transaction_id, address, amount, is_payout, n
-	FROM transactions
-	LEFT JOIN tx_out ON tx_out.transaction_id = transactions.transaction_id
+	SELECT DISTINCT transactions.transaction_id, address, amount, is_payout, n, transactions.size
+	FROM blocks_transactions
+	JOIN transactions ON blocks_transactions.transaction_id = transactions.transaction_id
+	JOIN tx_out ON tx_out.transaction_id = transactions.transaction_id
 	WHERE $condition
 	";
 	$req = pg_query($req);
 	while($r = pg_fetch_row($req)) {
 		$transactions[bits2hex($r[0])]['out'][] = array(
-			Bitcoin::hash160ToAddress(bits2hex($r[1])), $r[2], $r[3], $r[4]
+			Bitcoin::hash160ToAddress(bits2hex($r[1])), $r[2], $r[3], $r[4], $r[5]
 		);
 	}
 
 	$req = "
-	SELECT transactions.transaction_id, tx_out.address, tx_out.amount
-	FROM transactions
+	SELECT DISTINCT transactions.transaction_id, tx_out.address, tx_out.amount, tx_out.transaction_id
+	FROM blocks_transactions
+	JOIN transactions ON transactions.transaction_id = blocks_transactions.transaction_id
 	JOIN tx_in ON tx_in.transaction_id = transactions.transaction_id
 	JOIN tx_out ON tx_out.transaction_id = tx_in.previous_out AND tx_out.n = tx_in.previous_n
 	WHERE $condition
@@ -131,18 +138,20 @@ function fetchTransactions($blockHash, $txHash = null) {
 		);
 	}
 
-	return array($block, $time, $number, $foundBy, $transactions);
+	return array($block, $time, $number, $foundBy, $size, $transactions);
 }
 
 function formatTransactionsTable($transactions) {
 	$cols = "<tr>
 <th>#</th>
 <th>Transaction id</th>
+<th>Size</th>
 <th>Fee</th>
 <th>From (amount)</th>
 <th>To (amount)</th>
 </tr>";
 
+	$totalGenerated = null;
 
 	ob_start();
 	foreach($transactions as $id => $tx) {
@@ -152,8 +161,13 @@ function formatTransactionsTable($transactions) {
 		$cmp = function($a, $b) { return bccomp($b[1], $a[1]); };
 		if(isset($tx['in']) && is_array($tx['in'])) usort($tx['in'], $cmp);
 		else $tx['in'] = array();
-		if(isset($tx['out']) && is_array($tx['out'])) usort($tx['out'], $cmp);
-		else $tx['out'] = array();
+		if(isset($tx['out']) && is_array($tx['out'])) {
+			usort($tx['out'], $cmp);
+			$size = formatSize($tx['out'][0][4]);
+		} else {
+			$tx['out'] = array();
+			$size = 'N/A';
+		}
 
 		$fee = "0";
 		$a = array();
@@ -179,6 +193,7 @@ function formatTransactionsTable($transactions) {
 		} else $fee = formatSatoshi($fee);
 
 		echo "<td><a href='/tx/$id' title='$id'>".substr($id, 0, 7)."…</a></td>\n";
+		echo "<td>$size</td>\n";
 		echo "<td>".$fee."</td>\n";
 
 		echo "<td>\n".implode("<br />\n", $a)."\n</td>\n";
@@ -277,7 +292,7 @@ function formatRecentBlocks($n, $foundBy = null, $recentScores = 0) {
 	} else $cond = 'true';
 
 	$req = pg_query("
-	SELECT hash, time, found_by, number
+	SELECT blocks.hash, time, found_by, number, size
 	FROM blocks
 	WHERE $cond
 	ORDER BY number DESC
@@ -287,6 +302,7 @@ function formatRecentBlocks($n, $foundBy = null, $recentScores = 0) {
 	$cols = "<tr>
 <th title='Do not trust this value, it is based on the local time of the node which found the block.'><span>When</span></th>
 <th colspan='2'>&#9660; Block</th>
+<th>Size</th>
 <th>Found by</th>
 <th>See scores</th>
 </tr>";
@@ -334,6 +350,7 @@ function formatRecentBlocks($n, $foundBy = null, $recentScores = 0) {
 		$rows .= "<td>".prettyDuration($now - $r[1], 2)." ago</td>\n";
 		$rows .= "<td><a href='/b/$blkNum'>$blkNum</a></td>";
 		$rows .= "<td><a href='/block/$block'>$block</a></td>\n";
+		$rows .= "<td>".formatSize($r[4])."</td>\n";
 		$rows .= "<td>$pool</td>\n";
 		$rows .= "<td><a href='/score/$block'>Scores</a></td>\n";
 

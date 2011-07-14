@@ -6,7 +6,7 @@
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://sam.zoy.org/wtfpl/COPYING for more details. */
 
-function insertBlock($number, $blk, $forceQueries = false) {
+function insertBlock($number, $blk, $invalidateAddresses = false) {
 	$blkBits = hex2bits($blk['hash']);
 	$time = $blk['time'];
 	$prevBits = (preg_match('%^0{64}$%', $blk['prev_block'])) ? 'NULL' : "B'".hex2bits($blk['prev_block'])."'";
@@ -93,4 +93,29 @@ function insertBlock($number, $blk, $forceQueries = false) {
 	$block_trans;
 	COMMIT;
 	");
+	
+	invalidateCache('block', $blk['prev_block']);
+	if($invalidateAddresses) {
+		$outReq = pg_query("
+		SELECT DISTINCT tx_out.address
+		FROM tx_out
+		JOIN blocks_transactions ON blocks_transactions.transaction_id = tx_out.transaction_id
+		WHERE blocks_transactions.block = B'$blkBits'
+		");
+		$inReq = pg_query("
+		SELECT DISTINCT tx_out.address
+		FROM tx_out
+		JOIN tx_in ON tx_in.previous_out = tx_out.transaction_id AND tx_in.previous_n = tx_out.n
+		JOIN blocks_transactions ON blocks_transactions.transaction_id = tx_in.transaction_id
+		WHERE blocks_transactions.block = B'$blkBits'
+		");
+
+		$toInvalidate = array();
+		while($r = pg_fetch_row($outReq)) $toInvalidate[$r[0]] = true;
+		while($r = pg_fetch_row($inReq)) $toInvalidate[$r[0]] = true;
+
+		foreach($toInvalidate as $addressBits => $nevermind) {
+			invalidateCache('address', bits2hex($addressBits));
+		}
+	}
 }

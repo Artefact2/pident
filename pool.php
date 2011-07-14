@@ -10,6 +10,8 @@ require __DIR__.'/lib/inc.main.php';
 
 $pool = htmlspecialchars(@array_pop(explode('/', $_SERVER['REQUEST_URI'])));
 
+declareCache('pool', $pool);
+
 echo "<!DOCTYPE html>
 <html>
 <head>

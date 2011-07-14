@@ -63,4 +63,6 @@ $q .= implode(',', $values);
 $q .= '; COMMIT;';
 pg_query($q);
 
+invalidateCache('score', '*', true);
+
 echo "\n";

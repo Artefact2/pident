@@ -8,25 +8,22 @@
 
 require __DIR__.'/lib/inc.main.php';
 
-declareCache('index');
+const RECENT = 500;
 
-$version = VERSION;
+declareCache('more');
 
 echo "<!DOCTYPE html>
 <html>
 <head>
 ".HEADER."
-<title>pident index page</title>
+<title>More recent blocks</title>
 </head>
 <body>
-<h1>pident — pool-biased blockchain representation <small>(version $version!)</small></h1>
+<h1>".RECENT." most recent blocks</h1>
+<p id='back'><a href='/'>&larr; Back to the main page</a></p>
 ";
 
-echo "<h2>Most recent blocks <small><a href='/more'>(see more…)</a></small></h2>\n";
-echo formatRecentBlocks(25);
-
-echo "<h2>Pools I'm aware of</h2>\n";
-echo formatPools();
+echo formatRecentBlocks(RECENT);
 
 echo FOOTER."
 </body>

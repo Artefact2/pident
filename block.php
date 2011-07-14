@@ -47,10 +47,18 @@ if(isset($_GET['redirect'])) {
 	die();
 }
 
+declareCache('block', $block, 86400);
+
 $bits = hex2bits($block);
 
 list($block, $time, $number, $foundBy, $size, $coinbase, $transactions) = fetchTransactions($block, null);
 list($totalGenerated, $transactionsHTML) = formatTransactionsTable($transactions);
+
+$maxBlock = pg_fetch_row(pg_query('SELECT MAX(number) FROM blocks;'));
+if($maxBlock[0] - $number > 5000) {
+	/* This is an old block, not likely to change anymore */
+	declareCacheExpiration(86400, true);
+}
 
 $foundBy = prettyPool($foundBy);
 $size = formatSize($size);

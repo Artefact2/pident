@@ -52,7 +52,11 @@ for($i = $start; $i <= $max; ++$i) {
 
 	echo "\r$fI/$max processing... (".$blk['hash'].")";
 
-	insertBlock($i, $blk);
+	insertBlock($i, $blk, ($max - $i) <= 120);
 }
 
-if(isset($fI)) echo "\n";
+if(isset($fI)) {
+	invalidateCache('index');
+	invalidateCache('more');
+	echo "\n";
+}

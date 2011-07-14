@@ -9,8 +9,10 @@
 require __DIR__.'/lib/inc.main.php';
 
 $block = @array_pop(explode('/', $_SERVER['REQUEST_URI']));
-$bits = hex2bits($block);
 
+declareCache('score', $block);
+
+$bits = hex2bits($block);
 $blockNumber = pg_fetch_row(pg_query('SELECT number FROM blocks WHERE hash = B\''.$bits.'\''));
 $totalCount = pg_fetch_row(pg_query('SELECT MAX(number) FROM blocks;'));
 

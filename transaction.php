@@ -10,6 +10,9 @@ require __DIR__.'/lib/inc.main.php';
 
 $txid = @array_pop(explode('/', $_SERVER['REQUEST_URI']));
 
+declareCache('transaction', $txid);
+declareCacheExpiration(86400, true);
+
 list($block, $time, $blockNum, $foundBy, $size, $coinbase, $transactions) = fetchTransactions(null, $txid);
 list($totalGenerated, $transactionsHTML) = formatTransactionsTable($transactions);
 

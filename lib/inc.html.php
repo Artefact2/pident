@@ -255,7 +255,7 @@ function formatAddressTransactions($data, $in = true) {
 
 		echo "<tr id='$prefix$id'>\n";
 		echo "<td><a href='#$prefix$id'>#</a></td>\n";
-		echo "<td><a href='/tx/$id' title='$id'>".substr($id, 0, 7)."…</a></td>\n";
+		echo "<td><a href='/tx/$id' title='$id'>".substr($id, 0, 14)."…</a></td>\n";
 		echo "<td><a href='/b/$blockNum'>$blockNum</a></td>\n";
 		echo "<td><a href='/block/$block#$id'>".$block."</a></td>\n";
 		echo "<td>\n".$a."\n</td>\n";

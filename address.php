@@ -11,6 +11,8 @@ require __DIR__.'/lib/inc.main.php';
 $address = @array_pop(explode('/', $_SERVER['REQUEST_URI']));
 $hash160 = Bitcoin::addressToHash160($address);
 
+declareCache('address', $hash160);
+
 list($firstBlock, $in, $out) = fetchAddressTransactions($hash160);
 
 echo "<!DOCTYPE html>

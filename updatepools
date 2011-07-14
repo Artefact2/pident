@@ -64,6 +64,7 @@ AND found_by IS NOT NULL
 ORDER BY number ASC
 ");
 
+$updatedPools = array();
 $c = $latestNum;
 $cL = strlen($latestNum);
 while($r = pg_fetch_row($toIdentify)) {
@@ -86,9 +87,16 @@ while($r = pg_fetch_row($toIdentify)) {
 	call_user_func($identifyPayouts[$pool], $hash);
 
 	$identified[$hash] = true;
+	invalidateCache('block', $hash);
+	$updatedPools[$pool] = true;
 }
 
 if(isset($hash)) {
 	cacheStore('blocks_identified', $identified);
+	invalidateCache('index');
+	invalidateCache('more');
+	foreach($updatedPools as $pool => $nevermind) {
+		invalidateCache('pool', $pool);
+	}
 	echo "\n";
 }

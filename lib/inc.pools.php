@@ -124,6 +124,17 @@ $foundBy = array(
 		return array(BLOCK_HASHES, $matches[1]);
 	},
 	'Ozco.in' => function() {
+		if(!$GLOBALS['conf']['ozcoin']['username'] || !$GLOBALS['conf']['ozcoin']['password']) {
+			return array(-1, array());
+		}
+
+		$login = curl_get_uri('https://ozco.in');
+		
+		$post['username'] = $GLOBALS['conf']['ozcoin']['username'];
+		$post['password'] = $GLOBALS['conf']['ozcoin']['password'];
+
+		curl_send_request('https://ozco.in/login.php', $post);
+
 		$main = curl_get_uri('https://ozco.in/blocks.php');
 		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $main, $blocksN);
 
@@ -179,84 +190,149 @@ $foundBy = array(
 
 		return array(BLOCK_NUMBERS, $blocks);
 	},
-);
+	'TripleMining' => function() {
+		$main = curl_get_uri('https://www.triplemining.com/stats');
+		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $main, $blocksN);
 
-$identifyPayouts = array(
-	'Eligius' => function($blk) {
-		$bits = hex2bits($blk);
-
-		$genTxId = pg_fetch_row(pg_query("
-		SELECT DISTINCT tx_out.transaction_id
-		FROM tx_out
-		LEFT JOIN tx_in ON tx_in.transaction_id = tx_out.transaction_id
-		JOIN blocks_transactions ON blocks_transactions.transaction_id = tx_out.transaction_id
-		WHERE block = B'$bits'
-		AND tx_in.transaction_id IS NULL
-		"));
-
-		$genTxIdBits = $genTxId[0];
-
-		$gen = pg_query("
-		UPDATE tx_out SET is_payout = true
-		WHERE transaction_id = B'$genTxIdBits'
-		AND n <> 0
-		");
+		return array(BLOCK_NUMBERS, $blocksN[1]);
 	},
-	'DeepBit' => function($blk) {
-		/*list($block, $time, $number, $foundBy, $transactions) = fetchTransactions($blk, null);
-
-		$payouts = array();
-		foreach($transactions as $id => $tx) {
-			$fee = '0';
-			foreach($tx['in'] as $in) {
-				$fee = bcadd($fee, $in[1], 0);
-			}
-			foreach($tx['out'] as $out) {
-				$fee = bcsub($fee, $out[1], 0);
-			}
-
-			if(bccomp($fee, '0') != 0) continue;
-
-			foreach($tx['out'] as $out) {
-				$n = $out[3];
-				$amount = $out[1];
-				if(bccomp(bcmod($amount, 1000000), '0') == 0) {
-					$payouts[$id][] = $n;
-				}
-			}
+	'X8s' => function() {
+		if(!$GLOBALS['conf']['x8s']['username'] || !$GLOBALS['conf']['x8s']['password']) {
+			return array(-1, array());
 		}
 
-		if(count($payouts) == 0) return;
+		curl_get_uri('http://btc.x8s.de/account/login');
 
-		$where = array();
-		foreach($payouts as $txId => $ns) {
-			$where[] = "(transaction_id = B'".hex2bits($txId)."' AND n IN (".implode(',', $ns)."))";
-		}
-		$where = implode(' OR ', $where);
+		$post['_username'] = $GLOBALS['conf']['x8s']['username'];
+		$post['_password'] = $GLOBALS['conf']['x8s']['password'];
+		$post['_remember_me'] = '1';
 
-		pg_query("
-		UPDATE tx_out SET is_payout = true
-		WHERE $where
-		");*/
+		curl_send_request('http://btc.x8s.de/account/login_check', $post);
 
-		$bits = hex2bits($blk);
-		pg_query("
-		UPDATE tx_out SET is_payout = true
-		FROM blocks_transactions
-		WHERE tx_out.transaction_id = blocks_transactions.transaction_id
-		AND block = B'$bits'
-		");
+		$blockPage = curl_get_uri('http://btc.x8s.de/account/stats');
+		preg_match_all('%<tr class="more_updates" begin="([0-9]+)">%', $blockPage, $matches);
+		$begin = $matches[1][0];
+		$blockPage .= curl_get_uri('http://btc.x8s.de/account/statsload?begin='.$begin);
+		
+		preg_match_all("%href='http://blockexplorer.com/block/([0-9a-f]{64})'%", $blockPage, $matches);
+		return array(BLOCK_HASHES, $matches[1]);
 	},
 );
 
-$identifyPayouts['ArsBitcoin'] = $identifyPayouts['DeepBit'];
-$identifyPayouts['BTCGuild'] = $identifyPayouts['DeepBit'];
-$identifyPayouts['BTCMine'] = $identifyPayouts['DeepBit'];
-$identifyPayouts['BitPit'] = $identifyPayouts['DeepBit'];
-$identifyPayouts['Bitcoins.lc'] = $identifyPayouts['DeepBit'];
-$identifyPayouts['EclipseMC'] = $identifyPayouts['DeepBit'];
-$identifyPayouts['Mineco.in'] = $identifyPayouts['DeepBit'];
-$identifyPayouts['MtRed'] = $identifyPayouts['DeepBit'];
-$identifyPayouts['Ozco.in'] = $identifyPayouts['DeepBit'];
-$identifyPayouts['Slush'] = $identifyPayouts['DeepBit'];
+/* Accurate methods */
+$identifyPayouts['Eligius'] = function($blk) {
+	return identifyGenerationAddresses($blk, false);
+};
 
+/* Somewhat working methods */
+$identifyPayouts['DeepBit'] = function($blk) { 
+	return identifyWithCriteria($blk, 2, 
+		function($fee) { return bccomp($fee, 0) == 0; },
+		function($out) { return $out == 2; },
+		function($in) { return $in == 1; }	
+	);
+};
+
+/* Maybe working? */
+$identifyPayouts['Bitcoins.lc'] = function($blk) {
+	return identifyWithCriteria($blk, 2, function($x) { return bccomp($x, 0) == 0; });
+};
+
+/* Placeholder hacks */
+$dumbZeroFee = function($blk) { return identifyWithCriteria($blk, 8, function($x) { return bccomp($x, 0) == 0; }); };
+
+$identifyPayouts['ArsBitcoin'] = $dumbZeroFee;
+$identifyPayouts['BTCMine'] = $dumbZeroFee;
+$identifyPayouts['BTCGuild'] = $dumbZeroFee;
+$identifyPayouts['BitPit'] = $dumbZeroFee;
+$identifyPayouts['EclipseMC'] = $dumbZeroFee;
+$identifyPayouts['Mineco.in'] = $dumbZeroFee;
+$identifyPayouts['MtRed'] = $dumbZeroFee;
+$identifyPayouts['Ozco.in'] = $dumbZeroFee;
+$identifyPayouts['Slush'] = $dumbZeroFee;
+$identifyPayouts['X8s'] = $dumbZeroFee;
+$identifyPayouts['TripleMining'] = $dumbZeroFee;
+$identifyPayouts['Bitcoinpool'] = $dumbZeroFee;
+
+/* --------------------------------------------------------------------------------------------------- */
+
+function identifyGenerationAddresses($blk, $includePubkeyAddress = false) {
+	$bits = hex2bits($blk);
+
+	$genTxId = pg_fetch_row(pg_query("
+	SELECT DISTINCT tx_out.transaction_id
+	FROM tx_out
+	LEFT JOIN tx_in ON tx_in.transaction_id = tx_out.transaction_id
+	JOIN blocks_transactions ON blocks_transactions.transaction_id = tx_out.transaction_id
+	WHERE block = B'$bits'
+	AND tx_in.transaction_id IS NULL
+	"));
+
+	$genTxIdBits = $genTxId[0];
+	$cond = $includePubkeyAddress ? '' : 'AND n <> 0';
+
+	$gen = pg_query("
+	UPDATE tx_out SET is_payout = true
+	WHERE transaction_id = B'$genTxIdBits'
+	$cond
+	");
+}
+
+function identifyEverything($blk) {
+	$bits = hex2bits($blk);
+	pg_query("
+	UPDATE tx_out SET is_payout = true
+	FROM blocks_transactions
+	WHERE tx_out.transaction_id = blocks_transactions.transaction_id
+	AND block = B'$bits'
+	");
+}
+
+function identifyWithCriteria($blk, $numDecimals = 8, $feeCallback = null, $outNumCallback = null, $inNumCallback = null) {
+	list($block, $time, $number, $foundBy, $size, $coinbase, $transactions) = fetchTransactions($blk, null);
+
+	$payouts = array();
+	foreach($transactions as $id => $tx) {
+		if(!isset($tx['in'])) $tx['in'] = array();
+
+		if($outNumCallback !== null) {
+			if(!call_user_func($outNumCallback, count($tx['out']))) continue;
+		}
+		if($inNumCallback !== null) {
+			if(!call_user_func($inNumCallback, count($tx['in']))) continue;
+		}
+
+		$fee = '0';
+		foreach($tx['in'] as $in) {
+			$fee = bcadd($fee, $in[1], 0);
+		}
+		foreach($tx['out'] as $out) {
+			$fee = bcsub($fee, $out[1], 0);
+		}
+
+		if($feeCallback !== null && !call_user_func($feeCallback, $fee)) continue;
+
+		foreach($tx['out'] as $out) {
+			$n = $out[3];
+			$amount = $out[1];
+
+			$mod = bcpow(10, 8 - $numDecimals);
+			if(bccomp(bcmod($amount, $mod), '0') == 0) {
+				$payouts[$id][] = $n;
+			}
+		}
+	}
+
+	if(count($payouts) == 0) return;
+
+	$where = array();
+	foreach($payouts as $txId => $ns) {
+		$where[] = "(transaction_id = B'".hex2bits($txId)."' AND n IN (".implode(',', $ns)."))";
+	}
+	$where = implode(' OR ', $where);
+
+	pg_query("
+	UPDATE tx_out SET is_payout = true
+	WHERE $where
+	");
+}

@@ -36,6 +36,8 @@ function cacheStore($name, $data) {
 }
 
 function declareCache($name, $identifier = null, $expires = null) {
+	if(!$GLOBALS['conf']['caching']) return;
+
 	$name = 'page_'.$name;
 	$fName = $identifier ? ($name.'_'.$identifier) : $name;
 	$fMeta = $fName.'.metadata';

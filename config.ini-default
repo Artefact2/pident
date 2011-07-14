@@ -1,5 +1,8 @@
 [pident]
 
+; Set this to on to enable caching. The cache/ directory must be writeable by your www user.
+caching = Off
+
 ; Connection string used to connect to the PostgreSQL database.
 postgresql_connection_string = "host=127.0.0.1 port=5432 dbname=pident user=pident password=pident"
 

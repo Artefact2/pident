@@ -312,35 +312,18 @@ function formatRecentBlocks($n, $foundBy = null, $recentScores = 0) {
 		$blkNum = $r[3];
 		$rows .= "<tr>\n";
 
-		$pool = prettyPool($r[2]);
-		if($i++ < $recentScores && $pool == 'N/A') {
-			list($avgs, $scores, $normalized) = fetchScores($block);
-			$v = array_values($normalized);
-			$p = array_keys($normalized);
-
-			if(count($v) == 0) {
-				$v = array(0);
-				$p = array('N/A');
-			}
-
-			if(isset($blacklist[$p[0]])) {
-				// Ignore it
-			} else if($v[0] > 1.3) {
-				$label = 'Certainely';
-			} else if($v[0] > 0.9) {
-				$label = 'Probably';
-			} else if($v[0] > 0.7) {
-				$label = 'Maybe';
-			}
-
-			if(isset($label)) {
-				$pool = "<a href='/score/$block'>$label</a> ".prettyPool($p[0]);
+		if($i++ < $recentScores && !$r[2]) {
+			$scores = fetchScores($block);
+			$guess = identifyPool(array_pop($scores));
+			if($guess !== null) list($confidence, $pool) = $guess;
+			if($guess === null || isset($blacklist[$pool])) {
+				$pool = 'N/A';
 			} else {
-				$pool = "<a href='/score/$block'>N/A</a>";
+				$pool = prettyPool($pool)." <small>($confidence)</small>";
 			}
-			unset($label);
 		} else {
 			$blacklist[$r[2]] = true;
+			$pool = prettyPool($r[2]);
 		}
 
 		$rows .= "<td>".prettyDuration($now - $r[1], 2)." ago</td>\n";
@@ -440,7 +423,7 @@ function fetchScores($block) {
 
 	$normalized = array();
 	foreach($scores as $pool => $score) {
-		$normalized[$pool] = isset($avgs[$pool]) ? ($scores[$pool] / $avgs[$pool]) : -1;
+		$normalized[$pool] = isset($avgs[$pool]) ? normalizeScore($scores[$pool], $avgs[$pool]) : -1;
 	}
 
 	arsort($normalized);

@@ -364,9 +364,9 @@ function formatPools() {
 	ORDER BY found_by ASC
 	");
 
-	$rows = '';
+	$rows = array();
 	while($r = pg_fetch_row($req)) {
-		$rows .= "<tr>\n";
+		$row = "<tr>\n";
 
 		$pool = $r[0];
 		$count = $r[1];
@@ -380,25 +380,31 @@ function formatPools() {
 		$mtbb = ($r[3] - $r[2]) / $r[1];
 		$prop = $r[1] / max($r[3] - $r[2] + $mtbb, 120);
 		$opacity = round(1 - cos($prop * M_PI), 2);
-		$prop = ($info ? '~' : '').number_format(100 * $prop, 1).' %';
+		$fProp = ($info ? '~' : '').number_format(100 * $prop, 1).' %';
 
-		$rows .= "<td>$prettyPool</td>\n";
-		$rows .= "<td><a href='/pool/$pool'>$count</a>$info</td>\n";
-		$rows .= "<td><span class='pool prop' style='background-color: rgba(255, 255, 127, $opacity);'>$prop</span></td>\n";
+		$row .= "<td>$prettyPool</td>\n";
+		$row .= "<td><a href='/pool/$pool'>$count</a>$info</td>\n";
+		$row .= "<td><span class='pool prop' style='background-color: rgba(255, 255, 127, $opacity);'>$fProp</span></td>\n";
 
-		$rows .= "</tr>\n";
+		$row .= "</tr>\n";
+
+		$rows[] = array($prop, $row);
 	}
+
+	usort($rows, function($a, $b) { return (int)(1000 * ($b[0] - $a[0])); });
+	$fRows = '';
+	foreach($rows as $row) $fRows .= $row[1];
 	
 	return "<table>
 <thead>
 <tr>
 <th>Pool</th>
 <th>Blocks found recently</th>
-<th>Pool size <small>(relative to the whole network)</small></th>
+<th>&#9660; Pool size <small>(relative to the whole network)</small></th>
 </tr>
 </thead>
 <tbody>
-$rows
+$fRows
 </tbody>
 </table>
 ";

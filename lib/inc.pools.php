@@ -92,12 +92,13 @@ $foundBy = array(
 		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/9.html');
 		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/10.html');
 
-		preg_match_all('%<tr class="(odd|even)"><td>([0-9a-f]{64})</td>%', $blockPage, $matches);
+		preg_match_all('%href="http://blockexplorer.com/tx/([0-9a-f]{64})"%', $blockPage, $matches);
 
 		$txBits = array();
-		foreach($matches[2] as $tx) {
+		foreach($matches[1] as $tx) {
 			$txBits[] = 'B\''.hex2bits($tx).'\'';
 		}
+		if(count($txBits) == 0) return array(-1, array());
 		$blocks = pg_query('SELECT DISTINCT block FROM blocks_transactions WHERE transaction_id IN ('.implode(',', $txBits).')');
 		$hashs = array();
 		while($r = pg_fetch_row($blocks)) {

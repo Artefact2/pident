@@ -65,4 +65,45 @@ pg_query($q);
 
 invalidateCache('score', '*', true);
 
+echo "\nupdating accuracy cache...";
+
+$accuracy = array();
+$req = pg_query("
+SELECT hash, found_by
+FROM blocks
+WHERE number > ($latest - $tau)
+AND found_by IS NOT NULL
+");
+
+while($r = pg_fetch_row($req)) {
+	$pool = $r[1];
+	if(!isset($accuracy[$pool])) {
+		$accuracy[$pool]['sample_size'] = 0;
+		$accuracy[$pool]['false_positives'] = 0;
+		$accuracy[$pool]['accuracy'] = array();
+	}
+
+	$block = bits2hex($r[0]);
+	$scores = fetchScores($block);
+	$guess = identifyPool(array_pop($scores));
+
+	$accuracy[$pool]['sample_size']++;
+	if($guess === null) continue;
+
+	list($confidence, $maybePool) = $guess;
+	if($pool == $maybePool) {
+		if(!isset($accuracy[$pool]['accuracy'][$confidence])) {
+			$accuracy[$pool]['accuracy'][$confidence] = 0;
+		}
+
+		$accuracy[$pool]['accuracy'][$confidence]++;
+	} else {
+		$accuracy[$pool]['false_positives']++;
+	}
+}
+
+cacheStore('accuracy', $accuracy);
+
+invalidateCache('accuracy');
+
 echo "\n";

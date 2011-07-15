@@ -101,9 +101,9 @@ function invalidateCache($name, $identifier = null, $glob = false) {
 		if(file_exists($fMeta)) unlink($fMeta);
 	} else {
 		$a = glob($fName);
-		$b = glob($fMeta);
-
 		foreach($a as $d) unlink($d);
+
+		$b = glob($fMeta);
 		foreach($b as $d) unlink($d);
 	}
 }

@@ -314,7 +314,7 @@ function formatRecentBlocks($n, $foundBy = null, $recentScores = 0) {
 
 		if($i++ < $recentScores && !$r[2]) {
 			$scores = fetchScores($block);
-			$guess = identifyPool(array_pop($scores));
+			$guess = identifyPool($scores);
 			if($guess !== null) list($confidence, $pool) = $guess;
 			if($guess === null || isset($blacklist[$pool])) {
 				$pool = 'N/A';
@@ -410,35 +410,8 @@ $fRows
 ";
 }
 
-function fetchScores($block) {
-	static $avgs = null;
-	if($avgs === null) {
-		$req = pg_query('SELECT pool, average_score FROM scores_pool_averages;');
-		$avgs = array();
-		while($r = pg_fetch_row($req)) {
-			$avgs[$r[0]] = $r[1];
-		}
-	}
-
-	$bits = hex2bits($block);
-	$req = pg_query("SELECT pool, score_total FROM scores_blocks WHERE block = B'$bits'");
-	$scores = array();
-	while($r = pg_fetch_row($req)) {
-		$scores[$r[0]] = $r[1];
-	}
-
-	$normalized = array();
-	foreach($scores as $pool => $score) {
-		$normalized[$pool] = isset($avgs[$pool]) ? normalizeScore($scores[$pool], $avgs[$pool]) : -1;
-	}
-
-	arsort($normalized);
-
-	return array($avgs, $scores, $normalized);
-}
-
 function formatScores($block) {
-	list($avgs, $scores, $normalized) = fetchScores($block);
+	$normalized = fetchScores($block);
 
 	$rows = '';
 	foreach($normalized as $pool => $nScore) {
@@ -446,8 +419,6 @@ function formatScores($block) {
 
 		$rows .= "<td>".prettyPool($pool)."</td>\n";
 		$rows .= "<td>".($nScore >= 0 ? number_format($nScore, 3) : 'N/A')."</td>\n";
-		$rows .= "<td>".number_format($scores[$pool], 3)."</td>\n";
-		$rows .= "<td>".(isset($avgs[$pool]) ? number_format($avgs[$pool], 3) : 'N/A')."</td>\n";
 
 		$rows .= "</tr>\n";
 	}
@@ -457,8 +428,6 @@ function formatScores($block) {
 <tr>
 <th>Pool</th>
 <th>&#9660; Normalized score</th>
-<th>Raw score</th>
-<th>Average score of found blocks</th>
 </tr>
 </thead>
 <tbody>

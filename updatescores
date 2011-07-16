@@ -43,21 +43,113 @@ pg_query($q);
 
 echo "\nupdating score averages...";
 
-$req = "
-SELECT blocks.found_by, AVG(score_total)
+$q = 'BEGIN;
+TRUNCATE TABLE scores_pool_averages;
+INSERT INTO scores_pool_averages(
+	pool, 
+	score_average, score_stddev, 
+	block_size_average, block_size_stddev,
+	transaction_count_average, transaction_count_stddev,
+	generation_addresses_average, generation_addresses_stddev,
+	coinbase_distance_average, coinbase_distance_stddev
+) VALUES ';
+
+$values = array();
+$rawValues = array();
+
+$req = pg_query("
+SELECT blocks.found_by, score_total
 FROM blocks 
 JOIN scores_blocks ON scores_blocks.block = blocks.hash AND scores_blocks.pool = blocks.found_by 
-GROUP BY blocks.found_by
-";
-
-$q = 'BEGIN; TRUNCATE TABLE scores_pool_averages; INSERT INTO scores_pool_averages(pool, average_score) VALUES ';
-$req = pg_query($req);
-$values = array();
+WHERE number >= ($latest - $backlog)
+AND found_by IS NOT NULL
+");
 while($r = pg_fetch_row($req)) {
-	list($pool, $avg) = $r;
-	$values[] = "('$pool', $avg)";
+	$rawValues[$r[0]]['scores'][] = $r[1];
 }
 
+$req = pg_query("
+SELECT blocks.found_by, size, coinbase
+FROM blocks 
+WHERE number >= ($latest - $backlog)
+AND found_by IS NOT NULL
+ORDER BY number ASC
+");
+while($r = pg_fetch_row($req)) {
+	$rawValues[$r[0]]['sizes'][] = $r[1];
+	$rawValues[$r[0]]['coinbases'][] = substr($r[2], 2);
+}
+
+$req = pg_query("
+SELECT blocks.hash, blocks.found_by, COUNT(transaction_id) AS transaction_count
+FROM blocks
+JOIN blocks_transactions ON blocks.hash = blocks_transactions.block
+WHERE number >= ($latest - $backlog)
+AND found_by IS NOT NULL
+GROUP BY blocks.hash, blocks.found_by
+");
+$blocksToFetchG = array();
+while($r = pg_fetch_row($req)) {
+	$rawValues[$r[1]]['transactions_counts'][] = $r[2];
+	$blocksToFetchG[] = bits2hex($r[0]);
+}
+
+$c = count($blocksToFetchG);
+$generationTxBits = array();
+for($i = 0; $i < $c; ++$i) {
+	$blk = json_decode(shell_exec('bitcoind getblockbyhash '.$blocksToFetchG[$i]), true);
+	$generationTxBits[] = "B'".hex2bits($blk['tx'][0]['hash'])."'";
+}
+$req = pg_query("
+SELECT found_by, COUNT(address)
+FROM tx_out
+JOIN blocks_transactions ON tx_out.transaction_id = blocks_transactions.transaction_id
+JOIN blocks ON blocks.hash = blocks_transactions.block
+WHERE tx_out.transaction_id IN (".implode(',', $generationTxBits).")
+GROUP BY blocks.hash, blocks.found_by
+");
+while($r = pg_fetch_row($req)) {
+	$rawValues[$r[0]]['generation_addresses'][] = $r[1];
+}
+
+foreach($rawValues as $pool => $pData) {
+	if(!isset($pData['scores'])) continue;
+	$scoreAvg = average($pData['scores']);
+	foreach($pData['scores'] as &$score) {
+		$n = $score / $scoreAvg;
+		if($n > 1) $n = 1/$n;
+		$score = $n * $scoreAvg;
+	}
+	$scoreDev = stddev($pData['scores'], $scoreAvg);
+	if($scoreDev === null) continue;
+
+	if(!isset($pData['sizes'])) continue;
+	$sizesAvg = average($pData['sizes']);
+	$sizesDev = stddev($pData['sizes'], $sizesAvg);
+	if($sizesDev === null) continue;
+
+	if(!isset($pData['transactions_counts'])) continue;
+	$txAvg = average($pData['transactions_counts']);
+	$txDev = stddev($pData['transactions_counts'], $txAvg);
+	if($txDev === null) continue;
+
+	if(!isset($pData['generation_addresses'])) continue;
+	$genAvg = average($pData['generation_addresses']);
+	$genDev = stddev($pData['generation_addresses'], $genAvg);
+	if($genDev === null) continue;
+
+	if(!isset($pData['coinbases'])) continue;
+	$distances = array();
+	$cC = count($pData['coinbases']);
+	for($j = 0; $j < ($cC - 1); ++$j) {
+		$distances[] = levenshtein($pData['coinbases'][$j], $pData['coinbases'][$j + 1]);
+	}
+	$cbdAvg = average($distances);
+	$cbdDev = stddev($distances, $cbdAvg);
+	if($cbdDev === null) continue;
+
+	$values[] = "('$pool', $scoreAvg, $scoreDev, $sizesAvg, $sizesDev, $txAvg, $txDev, $genAvg, $genDev, $cbdAvg, $cbdDev)";
+}
 
 $q .= implode(',', $values);
 $q .= '; COMMIT;';
@@ -85,7 +177,7 @@ while($r = pg_fetch_row($req)) {
 
 	$block = bits2hex($r[0]);
 	$scores = fetchScores($block);
-	$guess = identifyPool(array_pop($scores));
+	$guess = identifyPool($scores);
 
 	$accuracy[$pool]['sample_size']++;
 	if($guess === null) continue;

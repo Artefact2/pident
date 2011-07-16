@@ -175,3 +175,20 @@ function formatCoinbase($coinbase) {
 	return "<code>$coinbase</code> ($sane)";
 }
 
+function average($array) {
+	$c = count($array);
+	if($c == 0) return null;
+	return array_sum($array) / $c;
+}
+
+function stddev($array, $average) {
+	$c = count($array);
+	if($c < 2 || $average === null) return null;
+
+	$variance = 0;
+	foreach($array as $z) {
+		$variance += pow($z - $average, 2);
+	}
+
+	return sqrt($variance / ($c - 1));
+}

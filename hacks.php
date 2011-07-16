@@ -9,19 +9,25 @@
 
 require __DIR__.'/lib/inc.main.php';
 
-/* Update wrong coinbase */
+ini_set('memory_limit', '512M');
 
-$req = pg_query("
-SELECT hash
-FROM blocks
-WHERE coinbase = E'\\\\x00'
+/* Update gen transactions */
+
+$max = trim(shell_exec('bitcoind getblockcount'));
+$txBits = array();
+for($i = 0; $i <= $max; ++$i) {
+	$json = json_decode(shell_exec('bitcoind getblockbycount '.$i), true);
+
+	$txBits[] = "B'".hex2bits($json['tx'][0]['hash'])."'";
+
+	echo "\rgot txid for block $i...";
+}
+
+$in = implode(',', $txBits);
+pg_query("
+UPDATE transactions
+SET is_generation = true
+WHERE transaction_id IN ($in)
 ");
 
-while($r = pg_fetch_row($req)) {
-	$bits = $r[0];
-	$hex = bits2hex($bits);
-	$blk = json_decode(shell_exec('bitcoind getblockbyhash '.$hex), true);
-
-	$coinbase = $blk['tx'][0]['in'][0]['coinbase'];
-	pg_query("UPDATE blocks SET coinbase = E'\\\\x$coinbase' WHERE hash = B'$bits';");
-}
+echo "\n";

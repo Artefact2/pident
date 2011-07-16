@@ -18,8 +18,12 @@ function insertBlock($number, $blk, $invalidateAddresses = false) {
 	$tx_in = array();
 	$tx_out = array();
 
+	$genTxBits = null;
 	foreach($blk['tx'] as $tx) {
 		$txBits[$tx['hash']] = hex2bits($tx['hash']);
+		if($genTxBits === null) {
+			$genTxBits = $txBits[$tx['hash']];
+		}
 	}
 	$txReq = implode(',', array_map(function($b) { return "B'$b'"; }, $txBits));
 	$req = pg_query("
@@ -39,7 +43,8 @@ function insertBlock($number, $blk, $invalidateAddresses = false) {
 		if(isset($txAlreadyHave[$txId])) continue;
 
 		$size = $tx['size'];
-		$tx_[] = "(B'$txId', $size)";
+		$gen = ($txId === $genTxBits) ? 'true' : 'false';
+		$tx_[] = "(B'$txId', $size, $gen)";
 
 		foreach($tx['in'] as $n => $in) {
 			if(isset($in['coinbase'])) {
@@ -75,7 +80,7 @@ function insertBlock($number, $blk, $invalidateAddresses = false) {
 	$block_trans = "INSERT INTO blocks_transactions(block, transaction_id)
 	VALUES ".implode(',', array_map(function($b) use($blkBits) { return "(B'$blkBits', B'$b')"; }, $txBits));
 	if(count($tx_) > 0) {
-		$trans = "INSERT INTO transactions(transaction_id, size) VALUES ".implode(',', $tx_);
+		$trans = "INSERT INTO transactions(transaction_id, size, is_generation) VALUES ".implode(',', $tx_);
 	} else $trans = '';
 	if(count($tx_out) > 0) 
 		$out = "INSERT INTO tx_out(transaction_id, n, amount, address, type) VALUES ".implode(',', $tx_out);

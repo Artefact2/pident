@@ -23,17 +23,25 @@ foreach($foundBy as $pool => $callback) {
 	if(count($in) == 0) continue;
 
 	if($type == BLOCK_NUMBERS) {
+		$minNumber = min($in);
 		$in = implode(',', $in);
 		$in = "number IN ($in)";
 	} else if($type == BLOCK_HASHES) {
 		$in = implode(',', array_map(function($h) { return "B'".hex2bits($h)."'"; }, $in));
+		$minNumber = pg_fetch_row(pg_query("SELECT MIN(number) FROM blocks WHERE hash IN ($in)"));
+		$minNumber = $minNumber[0];
 		$in = "hash IN ($in)";
 	} else {
 		// WTF ?
 		continue;
 	}
-
-	pg_query("UPDATE blocks SET found_by = '$pool' WHERE $in");
+	
+	pg_query("
+	BEGIN;
+	UPDATE blocks SET found_by = null WHERE number >= $minNumber AND found_by = '$pool';
+	UPDATE blocks SET found_by = '$pool' WHERE $in;
+	COMMIT;
+	");
 }
 
 echo "\n";
@@ -74,8 +82,8 @@ while($r = pg_fetch_row($toIdentify)) {
 	$hash = bits2hex($r[0]);
 	$pool = $r[2];
 
-	if(isset($identified[$hash]) && $identified[$hash]) continue;
 	if(!isset($identifyPayouts[$pool])) continue;
+	if(isset($identified[$hash]) && $identified[$hash] === $pool) continue;
 
 	pg_query("
 	UPDATE tx_out SET is_payout = false
@@ -86,7 +94,7 @@ while($r = pg_fetch_row($toIdentify)) {
 
 	call_user_func($identifyPayouts[$pool], $hash);
 
-	$identified[$hash] = true;
+	$identified[$hash] = $pool;
 	invalidateCache('block', $hash);
 	$updatedPools[$pool] = true;
 }

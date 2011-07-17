@@ -54,7 +54,7 @@ function curl_send_request($uri, $postFields) {
 }
 
 $foundBy = array(
-	'DeepBit' => function() {
+	/*'DeepBit' => function() {
 		$main = curl_get_uri('https://deepbit.net/stats');
 		preg_match_all("%href='/stats/([0-9]+)'%", $main, $matches);
 
@@ -217,7 +217,40 @@ $foundBy = array(
 		
 		preg_match_all("%href='http://blockexplorer.com/block/([0-9a-f]{64})'%", $blockPage, $matches);
 		return array(BLOCK_HASHES, $matches[1]);
-	},
+	},*/
+	'RFCPool' => function() {
+		$hasRounds = cacheFetch('pool_rfcpool', $success);
+		if(!$success) $hasRounds = array();
+
+		$rounds = curl_get_uri('https://www.rfcpool.com/stats/block');
+		preg_match_all("%href='(https://www.rfcpool.com/stats/block/([0-9]+))'%", $rounds, $rMatches);
+		
+		$truePages = '';
+		foreach($rMatches[2] as $i => $roundId) {
+			if(isset($hasRounds[$roundId]) && $hasRounds[$roundId]) continue;
+
+			$truePages .= curl_get_uri($rMatches[1][$i]);
+
+			$hasRounds[$roundId] = true;
+		}
+
+		cacheStore('pool_rfcpool', $hasRounds);
+
+		preg_match_all("%href='https://blockexplorer.com/tx/([0-9a-f]{64})'%", $truePages, $matches);
+		
+		$txBits = array();
+		foreach($matches[1] as $tx) {
+			$txBits[] = 'B\''.hex2bits($tx).'\'';
+		}
+		if(count($txBits) == 0) return array(-1, array());
+		$blocks = pg_query('SELECT DISTINCT block FROM blocks_transactions WHERE transaction_id IN ('.implode(',', $txBits).')');
+		$hashs = array();
+		while($r = pg_fetch_row($blocks)) {
+			$hashs[] = bits2hex($r[0]);
+		}
+
+		return array(BLOCK_HASHES, $hashs);
+	}
 );
 
 /* Accurate methods */

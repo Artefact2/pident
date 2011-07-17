@@ -54,7 +54,7 @@ function curl_send_request($uri, $postFields) {
 }
 
 $foundBy = array(
-	/*'DeepBit' => function() {
+	'DeepBit' => function() {
 		$main = curl_get_uri('https://deepbit.net/stats');
 		preg_match_all("%href='/stats/([0-9]+)'%", $main, $matches);
 
@@ -217,7 +217,7 @@ $foundBy = array(
 		
 		preg_match_all("%href='http://blockexplorer.com/block/([0-9a-f]{64})'%", $blockPage, $matches);
 		return array(BLOCK_HASHES, $matches[1]);
-	},*/
+	},
 	'RFCPool' => function() {
 		$hasRounds = cacheFetch('pool_rfcpool', $success);
 		if(!$success) $hasRounds = array();

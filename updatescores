@@ -81,31 +81,13 @@ while($r = pg_fetch_row($req)) {
 }
 
 $req = pg_query("
-SELECT blocks.hash, blocks.found_by, COUNT(transaction_id) AS transaction_count
-FROM blocks
-JOIN blocks_transactions ON blocks.hash = blocks_transactions.block
-WHERE number >= ($latest - $backlog)
-AND found_by IS NOT NULL
-GROUP BY blocks.hash, blocks.found_by
-");
-$blocksToFetchG = array();
-while($r = pg_fetch_row($req)) {
-	$rawValues[$r[1]]['transactions_counts'][] = $r[2];
-	$blocksToFetchG[] = bits2hex($r[0]);
-}
-
-$c = count($blocksToFetchG);
-$generationTxBits = array();
-for($i = 0; $i < $c; ++$i) {
-	$blk = json_decode(shell_exec('bitcoind getblockbyhash '.$blocksToFetchG[$i]), true);
-	$generationTxBits[] = "B'".hex2bits($blk['tx'][0]['hash'])."'";
-}
-$req = pg_query("
 SELECT found_by, COUNT(address)
 FROM tx_out
+JOIN transactions ON transactions.transaction_id = tx_out.transaction_id AND transactions.is_generate = true
 JOIN blocks_transactions ON tx_out.transaction_id = blocks_transactions.transaction_id
 JOIN blocks ON blocks.hash = blocks_transactions.block
-WHERE tx_out.transaction_id IN (".implode(',', $generationTxBits).")
+WHERE number >= ($latest - $backlog)
+AND found_by IS NOT NULL
 GROUP BY blocks.hash, blocks.found_by
 ");
 while($r = pg_fetch_row($req)) {
@@ -115,11 +97,6 @@ while($r = pg_fetch_row($req)) {
 foreach($rawValues as $pool => $pData) {
 	if(!isset($pData['scores'])) continue;
 	$scoreAvg = average($pData['scores']);
-	foreach($pData['scores'] as &$score) {
-		$n = $score / $scoreAvg;
-		if($n > 1) $n = 1/$n;
-		$score = $n * $scoreAvg;
-	}
 	$scoreDev = stddev($pData['scores'], $scoreAvg);
 	if($scoreDev === null) continue;
 

@@ -64,13 +64,22 @@ function fetchScores($block) {
 		$coinbases[$rawCoinbases[$r[0]]] = $r[1];
 	}
 	
+	$req = pg_query("
+	SELECT COUNT(address)
+	FROM tx_out
+	JOIN transactions ON transactions.transaction_id = tx_out.transaction_id AND transactions.is_generate = true
+	JOIN blocks_transactions ON tx_out.transaction_id = blocks_transactions.transaction_id
+	JOIN blocks ON blocks.hash = blocks_transactions.block
+	WHERE block = B'$bits'
+	");
+	list($genCount) = pg_fetch_row($req);
 
 	$normalized = array();
 	foreach($avgs as $pool => $a) {
 		$score = isset($scores[$pool]) ? $scores[$pool] : 0;
 		$coinbase2 = isset($coinbases[$pool]) ? $coinbases[$pool] : null;
 
-		$normalized[$pool] = normalizeScore($score, $size, $txCount, null, $coinbase, $coinbase2, $a);
+		$normalized[$pool] = normalizeScore($score, $size, $txCount, $genCount, $coinbase, $coinbase2, $a);
 	}
 
 	arsort($normalized);
@@ -82,17 +91,20 @@ function normalizeScore($rawScore, $size, $txCount, $genCount, $coinbase, $coinb
 	$norm = 0;
 
 	$norm += 10;
-	if($rawScore > $avg['score_average']) {
-		$n = $rawScore / $avg['score_average'];
-		$rawScore = $avg['score_average'] / $n;
-	}
-	$score += 10 / (1 + abs($rawScore - $avg['score_average']) / $avg['score_stddev']);
+	$score += 10 * (1 - exp(-$rawScore / $avg['score_average']));
 
 	$norm += 3;
 	$score += 3 / (1 + abs($size - $avg['block_size_average']) / $avg['block_size_stddev']);
 
-	$norm += 3;
-	$score += 3 / (1 + abs($txCount - $avg['transaction_count_average']) / $avg['transaction_count_stddev']);
+	$norm += 4;
+	$score += 4 / (1 + abs($txCount - $avg['transaction_count_average']) / $avg['transaction_count_stddev']);
+
+	/*$norm += 7;
+	if($avg['generation_addresses_stddev'] > 0) {
+		$score += 7 / (1 + 7 * abs($genCount - $avg['generation_addresses_average']) / $avg['generation_addresses_stddev']);
+	} else {
+		$score += (abs($genCount - $avg['generation_addresses_average']) < 0.1) ? 7 : 0;
+	}*/
 
 	if($coinbase2 !== null) {
 		$norm += 7;
@@ -116,10 +128,9 @@ function identifyPool($normalized) {
 		$diff = $v[0] / $v[1];
 		$n = $v[0];
 
-		if($n > 0.95) return array(C_MOST_LIKELY, $pool);
-		if($diff > 1.2) return array(C_MOST_LIKELY, $pool);
-		else if($diff > 1.15) return array(C_PROBABLY, $pool);
-		else if($diff > 1.1) return array(C_WILD_GUESS, $pool);
+		if($diff > 1.14) return array(C_MOST_LIKELY, $pool);
+		else if($diff > 1.11) return array(C_PROBABLY, $pool);
+		else if($diff > 1.08) return array(C_WILD_GUESS, $pool);
 		else if($diff > 1.05) return array(C_NOT_SURE_AT_ALL, $pool);
 	}
 

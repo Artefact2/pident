@@ -263,6 +263,7 @@ $identifyPayouts['Slush'] = $dumbZeroFee;
 $identifyPayouts['X8s'] = $dumbZeroFee;
 $identifyPayouts['TripleMining'] = $dumbZeroFee;
 $identifyPayouts['Bitcoinpool'] = $dumbZeroFee;
+$identifyPayouts['RFCPool'] = $dumbZeroFee;
 
 /* --------------------------------------------------------------------------------------------------- */
 

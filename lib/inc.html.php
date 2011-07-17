@@ -265,7 +265,7 @@ function formatAddressTransactions($data, $in = true) {
 
 	$rows = ob_get_clean();
 	if(!$rows) {
-		$rows = "<tr><td colspan='5'>No transactions yet.</td></tr>\n";
+		$rows = "<tr><td colspan='6'>No transactions yet.</td></tr>\n";
 	}
 
 	return "<table id='_$prefix'>
@@ -380,7 +380,7 @@ function formatPools() {
 		$mtbb = ($r[3] - $r[2]) / $r[1];
 		$prop = $r[1] / max($r[3] - $r[2] + $mtbb, 120);
 		$opacity = round(1 - cos($prop * M_PI), 2);
-		$fProp = ($info ? '~' : '').number_format(100 * $prop, 1).' %';
+		$fProp = ($info ? '~' : '').number_format(100 * $prop, $prop < 0.01 ? 2 : 1).' %';
 
 		$row .= "<td>$prettyPool</td>\n";
 		$row .= "<td><a href='/pool/$pool'>$count</a>$info</td>\n";

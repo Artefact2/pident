@@ -9,6 +9,7 @@
 const CACHE_DIRECTORY = '../cache';
 
 function getCacheFile($name) {
+	if(TONAL) $name = 'tonal_'.$name;
 	return __DIR__.'/'.CACHE_DIRECTORY.'/'.$name;
 }
 

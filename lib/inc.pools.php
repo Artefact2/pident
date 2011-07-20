@@ -198,25 +198,8 @@ $foundBy = array(
 		return array(BLOCK_NUMBERS, $blocksN[1]);
 	},
 	'X8s' => function() {
-		if(!$GLOBALS['conf']['x8s']['username'] || !$GLOBALS['conf']['x8s']['password']) {
-			return array(-1, array());
-		}
-
-		curl_get_uri('http://btc.x8s.de/account/login');
-
-		$post['_username'] = $GLOBALS['conf']['x8s']['username'];
-		$post['_password'] = $GLOBALS['conf']['x8s']['password'];
-		$post['_remember_me'] = '1';
-
-		curl_send_request('http://btc.x8s.de/account/login_check', $post);
-
-		$blockPage = curl_get_uri('http://btc.x8s.de/account/stats');
-		preg_match_all('%<tr class="more_updates" begin="([0-9]+)">%', $blockPage, $matches);
-		$begin = $matches[1][0];
-		$blockPage .= curl_get_uri('http://btc.x8s.de/account/statsload?begin='.$begin);
-		
-		preg_match_all("%href='http://blockexplorer.com/block/([0-9a-f]{64})'%", $blockPage, $matches);
-		return array(BLOCK_HASHES, $matches[1]);
+		$hashs = json_decode(curl_get_uri('https://btc.x8s.de/api/blockhashes.json'), true);
+		return array(BLOCK_HASHES, $hashs);
 	},
 	'RFCPool' => function() {
 		$rounds = json_decode(curl_get_uri('https://www.rfcpool.com/api/pool/blocks'), true);

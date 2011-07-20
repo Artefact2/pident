@@ -11,6 +11,15 @@ require __DIR__.'/lib/inc.main.php';
 $block = @array_pop(explode('/', $_SERVER['REQUEST_URI']));
 
 if(isset($_GET['redirect'])) {
+	if(substr($block, 0, 1) == 't') {
+		$block = urldecode(substr($block, 1));
+		if(!preg_match('%(0|([1-9][0-9]+))%u', $block)) {
+			$block = -42;
+		} else {
+			$block = tonalParseInteger($block);
+		}
+	}
+
 	$blocks = pg_query("SELECT hash FROM blocks WHERE number = $block");
 	$hashs = array();
 	while($r = pg_fetch_row($blocks)) $hashs[] = bits2hex($r[0]);
@@ -90,6 +99,10 @@ while($r = pg_fetch_row($req)) {
 }
 $next = (count($next) > 0 ? implode(', ', $next) : 'N/A (this block is either at the top of the chain, or invalid)');
 
+$unit = TONAL ? 'TBC' : 'BTC';
+$number = (TONAL ? 't' : '').formatInt($number, false);
+$uriNumber = urlencode($number);
+
 echo "<!DOCTYPE html>
 <html>
 <head>
@@ -100,10 +113,10 @@ echo "<!DOCTYPE html>
 <h1>Block <a href='/block/$block'>$block</a></h1>
 <p id='back'><a href='/'>&larr; Back to the main page</a></p>
 <ul>
-<li>Short URI of this block: <strong><a href='/b/$number'>/b/$number</a></strong></li>
+<li>Short URI of this block: <strong><a href='/b/$uriNumber'>/b/$number</a></strong></li>
 <li>Previous block: $previous</li>
 <li>Next block(s):  $next</li>
-<li>Generated BTC: $totalGenerated (includes transaction fees)</li>
+<li>Generated $unit: $totalGenerated (includes transaction fees)</li>
 <li>Block size: $size</li>
 <li>Coinbase: $coinbase</li>
 <li title='Do not trust this value, it is based on the local time of the node which found the block.'><span>Found at: $time UTC</span></li>

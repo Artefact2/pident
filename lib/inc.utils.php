@@ -87,6 +87,8 @@ function formatBTC($btc) {
 }
 
 function formatSatoshi($s) {
+	if(TONAL) return tonalFormatSatoshi($s);
+
 	$num = number_format(bcdiv($s, "100000000", 8), 8);
 	$i = 0;
 	$k = strlen($num) - 1;
@@ -95,6 +97,11 @@ function formatSatoshi($s) {
 	return substr($num, 0, $k - $i).($i == -1 ? '' : (
 		'<span class="bz">'.substr($num, $k - $i).'</span>'
 	));
+}
+
+function formatInt($i, $separators = true) {
+	if(TONAL) return tonalFormatInteger($i, $separators);
+	else return number_format($i, 0, '.', $separators ? ',' : '');
 }
 
 function prettyDuration($duration, $precision = 4) {
@@ -149,6 +156,10 @@ function extractColor($seed, $min = 0, $max = 256) {
 }
 
 function formatSize($b) {
+	if(TONAL) {
+		return formatInt($b).' bytes';
+	}
+
 	if($b >= 10000) {
 		$b /= 1000;
 		$unit = 'kB';

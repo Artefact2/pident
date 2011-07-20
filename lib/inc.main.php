@@ -32,4 +32,10 @@ require __DIR__.'/inc.score.php';
 require __DIR__.'/inc.html.php';
 require __DIR__.'/inc.update.php';
 
+define('TONAL', isset($GLOBALS['conf']['tonal_override']) ?
+	$GLOBALS['conf']['tonal_override'] :
+	preg_match($GLOBALS['conf']['tonal_regexp'], $_SERVER[$GLOBALS['conf']['tonal_server_var']])
+);
+if(TONAL) require __DIR__.'/inc.tonal.php';
+
 date_default_timezone_set('UTC');

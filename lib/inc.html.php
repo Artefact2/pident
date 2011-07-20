@@ -180,7 +180,8 @@ function formatTransactionsTable($transactions) {
 		if($generated = (bccomp($fee, '0') < 0)) {
 			$totalGenerated = formatSatoshi(-$fee);
 			$fee = 'N/A';
-			$a = array("<tr><td>Generated BTC: ".$totalGenerated."</td></tr>");
+			$unit = TONAL ? 'TBC' : 'BTC';
+			$a = array("<tr><td>Generated $unit: ".$totalGenerated."</td></tr>");
 		} else $fee = formatSatoshi($fee);
 
 		$row = "<tr id='$id'>\n"
@@ -253,10 +254,12 @@ function formatAddressTransactions($data, $in = true) {
 		}
 		$a = (count($a) > 0 ? implode("<br />\n", $a) : ($in ? '(Generated coins)' : '(No address)'));
 
+		$blockNumber = (TONAL ? 't' : '').urlencode(formatInt($blockNum, false));
+
 		echo "<tr id='$prefix$id'>\n";
 		echo "<td><a href='#$prefix$id'>#</a></td>\n";
 		echo "<td><a href='/tx/$id' title='$id'>".substr($id, 0, 14)."…</a></td>\n";
-		echo "<td><a href='/b/$blockNum'>$blockNum</a></td>\n";
+		echo "<td><a href='/b/$blockNumber'>".formatInt($blockNum)."</a></td>\n";
 		echo "<td><a href='/block/$block#$id'>".$block."</a></td>\n";
 		echo "<td>\n".$a."\n</td>\n";
 		echo "<td>\n".formatSatoshi($amount)."\n</td>\n";
@@ -325,9 +328,11 @@ function formatRecentBlocks($n, $foundBy = null, $recentScores = 0) {
 			$blacklist[$r[2]] = true;
 			$pool = prettyPool($r[2]);
 		}
+		
+		$blockNumber = (TONAL ? 't' : '').urlencode(formatInt($blkNum, false));
 
 		$rows .= "<td>".prettyDuration($now - $r[1], 2)." ago</td>\n";
-		$rows .= "<td><a href='/b/$blkNum'>$blkNum</a></td>";
+		$rows .= "<td><a href='/b/$blockNumber'>".formatInt($blkNum)."</a></td>";
 		$rows .= "<td><a href='/block/$block'>$block</a></td>\n";
 		$rows .= "<td>".formatSize($r[4])."</td>\n";
 		$rows .= "<td>$pool</td>\n";
@@ -380,10 +385,12 @@ function formatPools() {
 		$mtbb = ($r[3] - $r[2]) / $r[1];
 		$prop = $r[1] / max($r[3] - $r[2] + $mtbb, 120);
 		$opacity = round(1 - cos($prop * M_PI), 2);
-		$fProp = ($info ? '~' : '').number_format(100 * $prop, $prop < 0.01 ? 2 : 1).' %';
+		$fProp = TONAL ? tonalNumberFormat(0x100 * $prop, $prop < 1/0x100 ? 2 : 1) : 
+			number_format(100 * $prop, $prop < 0.01 ? 2 : 1).' %';
+		$fProp = ($info ? '~' : '').$fProp.' %';
 
 		$row .= "<td>$prettyPool</td>\n";
-		$row .= "<td><a href='/pool/$pool'>$count</a>$info</td>\n";
+		$row .= "<td><a href='/pool/$pool'>".formatInt($count)."</a>$info</td>\n";
 		$row .= "<td><span class='pool prop' style='background-color: rgba(255, 255, 127, $opacity);'>$fProp</span></td>\n";
 
 		$row .= "</tr>\n";

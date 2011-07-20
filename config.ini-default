@@ -6,6 +6,15 @@ caching = Off
 ; Connection string used to connect to the PostgreSQL database.
 postgresql_connection_string = "host=127.0.0.1 port=5432 dbname=pident user=pident password=pident"
 
+; Regular expression which has to match to enable "Tonal mode"
+tonal_regexp = "%^https?://(testing.)?tonal.%"
+
+; Which ones of the $_SERVER variables should be used for the regexp
+tonal_server_var = "REQUEST_URI"
+
+; If you uncomment this, force tonal mode (On) or decimal mode (Off)
+;tonal_override = On
+
 ; Number of blocks to include in score calculations.
 maximum_backlog = 4096
 

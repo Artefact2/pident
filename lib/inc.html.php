@@ -386,7 +386,7 @@ function formatPools() {
 		$prop = $r[1] / max($r[3] - $r[2] + $mtbb, 120);
 		$opacity = round(1 - cos($prop * M_PI), 2);
 		$fProp = TONAL ? tonalNumberFormat(0x100 * $prop, $prop < 1/0x100 ? 2 : 1) : 
-			number_format(100 * $prop, $prop < 0.01 ? 2 : 1).' %';
+			number_format(100 * $prop, $prop < 0.01 ? 2 : 1);
 		$fProp = ($info ? '~' : '').$fProp.' %';
 
 		$row .= "<td>$prettyPool</td>\n";

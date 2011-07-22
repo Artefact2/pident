@@ -34,8 +34,18 @@ require __DIR__.'/inc.update.php';
 
 define('TONAL', isset($GLOBALS['conf']['tonal_override']) ?
 	$GLOBALS['conf']['tonal_override'] :
-	preg_match($GLOBALS['conf']['tonal_regexp'], $_SERVER[$GLOBALS['conf']['tonal_server_var']])
+	preg_match($GLOBALS['conf']['tonal_regexp'], (isset($_SERVER[$GLOBALS['conf']['tonal_server_var']]) ? 
+		$_SERVER[$GLOBALS['conf']['tonal_server_var']] : 
+		'CLI'
+	))
 );
 if(TONAL) require __DIR__.'/inc.tonal.php';
 
 date_default_timezone_set('UTC');
+
+//header('Content-Type: text/plain');
+
+//var_dump($_SERVER);
+//var_dump($GLOBALS['conf']);
+
+//die();

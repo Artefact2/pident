@@ -18,6 +18,8 @@ if(isset($_GET['redirect'])) {
 		} else {
 			$block = tonalParseInteger($block);
 		}
+	} else if(!preg_match('%^[0-9]+$%', $block)) {
+		$block = -42;
 	}
 
 	$blocks = pg_query("SELECT hash FROM blocks WHERE number = $block");

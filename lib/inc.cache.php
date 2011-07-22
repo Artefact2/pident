@@ -9,7 +9,6 @@
 const CACHE_DIRECTORY = '../cache';
 
 function getCacheFile($name) {
-	if(TONAL) $name = 'tonal_'.$name;
 	return __DIR__.'/'.CACHE_DIRECTORY.'/'.$name;
 }
 
@@ -40,6 +39,7 @@ function declareCache($name, $identifier = null, $expires = null) {
 	if(!$GLOBALS['conf']['caching']) return;
 
 	$name = 'page_'.$name;
+	if(TONAL) $name = 'tonal_'.$name;
 	$fName = $identifier ? ($name.'_'.$identifier) : $name;
 	$fMeta = $fName.'.metadata';
 

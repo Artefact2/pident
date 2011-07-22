@@ -32,6 +32,11 @@ $cols = "<tr>
 $overallTotal = 0;
 $overallCoeff = 0;
 
+$round = function($p, $dec = 0) {
+	if(TONAL) return tonalNumberFormat($p * 0x100 / 100, $dec);
+	else return round($p, $dec);
+};
+
 $rows = '';
 ksort($accuracy);
 foreach($accuracy as $pool => $a) {
@@ -43,37 +48,37 @@ foreach($accuracy as $pool => $a) {
 	$p = @(100 * (
 		$a['accuracy'][C_MOST_LIKELY]
 	) / $a['sample_size']);
-	$rows .= "<td style='background-color: rgba(166, 230, 132, ".number_format($p / 100, 2).");'>".round($p)." %</td>\n";
+	$rows .= "<td style='background-color: rgba(166, 230, 132, ".number_format($p / 100, 2).");'>".$round($p)." %</td>\n";
 	$overallTotal += $p * 6 * $sSize;
 
 	$p = @(100 * (
 		$a['accuracy'][C_MOST_LIKELY] + $a['accuracy'][C_PROBABLY]
 	) / $a['sample_size']);
-	$rows .= "<td style='background-color: rgba(176, 230, 100, ".number_format($p / 100, 2).");'>".round($p)." %</td>\n";
+	$rows .= "<td style='background-color: rgba(176, 230, 100, ".number_format($p / 100, 2).");'>".$round($p)." %</td>\n";
 	$overallTotal += $p * 4 * $sSize;
 
 	$p = @(100 * (
 		$a['accuracy'][C_MOST_LIKELY] + $a['accuracy'][C_PROBABLY] + $a['accuracy'][C_WILD_GUESS]
 	) / $a['sample_size']);
-	$rows .= "<td style='background-color: rgba(186, 230, 70, ".number_format($p / 100, 2).");'>".round($p)." %</td>\n";
+	$rows .= "<td style='background-color: rgba(186, 230, 70, ".number_format($p / 100, 2).");'>".$round($p)." %</td>\n";
 	$overallTotal += $p * 2 * $sSize;
 
 	$p = @(100 * (
 		$a['accuracy'][C_MOST_LIKELY] + $a['accuracy'][C_PROBABLY] + $a['accuracy'][C_WILD_GUESS] + $a['accuracy'][C_NOT_SURE_AT_ALL]
 	) / $a['sample_size']);
-	$rows .= "<td style='background-color: rgba(196, 230, 60, ".number_format($p / 100, 2).");'>".round($p)." %</td>\n";
+	$rows .= "<td style='background-color: rgba(196, 230, 60, ".number_format($p / 100, 2).");'>".$round($p)." %</td>\n";
 	$overallTotal += $p * $sSize;
 
-	$p = @round(100 * $a['false_positives'] / $a['sample_size']);
-	$rows .= "<td style='background-color: rgba(255, 80, 80, ".number_format($p / 100, 2).");'>$p %</td>\n";
+	$p = @(100 * $a['false_positives'] / $a['sample_size']);
+	$rows .= "<td style='background-color: rgba(255, 80, 80, ".number_format($p / 100, 2).");'>".$round($p)." %</td>\n";
 
-	$rows .= "<td>".$sSize."</td>\n";
+	$rows .= "<td>".formatInt($sSize)."</td>\n";
 	$rows .= "</tr>\n";
 
 	$overallCoeff += 13 * $sSize;
 }
 
-$overall = round($overallTotal / $overallCoeff, 2);
+$overall = $round($overallTotal / $overallCoeff, 2);
 
 echo "<!DOCTYPE html>
 <html>

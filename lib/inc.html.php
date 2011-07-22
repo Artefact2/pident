@@ -425,7 +425,7 @@ function formatScores($block) {
 		$rows .= "<tr>\n";
 
 		$rows .= "<td>".prettyPool($pool)."</td>\n";
-		$rows .= "<td>".($nScore >= 0 ? number_format($nScore, 3) : 'N/A')."</td>\n";
+		$rows .= "<td>".($nScore >= 0 ? (TONAL ? tonalNumberFormat($nScore, 3) : number_format($nScore, 3)) : 'N/A')."</td>\n";
 
 		$rows .= "</tr>\n";
 	}

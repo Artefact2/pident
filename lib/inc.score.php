@@ -67,7 +67,7 @@ function fetchScores($block) {
 	$req = pg_query("
 	SELECT COUNT(address)
 	FROM tx_out
-	JOIN transactions ON transactions.transaction_id = tx_out.transaction_id AND transactions.is_generate = true
+	JOIN transactions ON transactions.transaction_id = tx_out.transaction_id AND transactions.is_generation = true
 	JOIN blocks_transactions ON tx_out.transaction_id = blocks_transactions.transaction_id
 	JOIN blocks ON blocks.hash = blocks_transactions.block
 	WHERE block = B'$bits'

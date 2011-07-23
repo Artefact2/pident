@@ -231,22 +231,37 @@ $identifyPayouts['Bitcoins.lc'] = function($blk) {
 	return identifyWithCriteria($blk, 2, function($x) { return bccomp($x, 0) == 0; });
 };
 
-/* Placeholder hacks */
-$dumbZeroFee = function($blk) { return identifyWithCriteria($blk, 8, function($x) { return bccomp($x, 0) == 0; }); };
+/* Callback to use when none is specified */
+$fallbackIdentify = function($blk) {
+	return identifyWithCriteria($blk, 8, function($x) { return bccomp($x, 0) == 0; });
+};
 
-$identifyPayouts['ArsBitcoin'] = $dumbZeroFee;
-$identifyPayouts['BTCMine'] = $dumbZeroFee;
-$identifyPayouts['BTCGuild'] = $dumbZeroFee;
-$identifyPayouts['BitPit'] = $dumbZeroFee;
-$identifyPayouts['EclipseMC'] = $dumbZeroFee;
-$identifyPayouts['Mineco.in'] = $dumbZeroFee;
-$identifyPayouts['MtRed'] = $dumbZeroFee;
-$identifyPayouts['Ozco.in'] = $dumbZeroFee;
-$identifyPayouts['Slush'] = $dumbZeroFee;
-$identifyPayouts['X8s'] = $dumbZeroFee;
-$identifyPayouts['TripleMining'] = $dumbZeroFee;
-$identifyPayouts['Bitcoinpool'] = $dumbZeroFee;
-$identifyPayouts['RFCPool'] = $dumbZeroFee;
+/* Pools will be processed in this order, possibly overwriting conflicts if any.
+ * So put the most trusted pools at the end of the list, and the least trusted in the beginning !
+ */
+$poolsTrust = array(
+	/* Known to report wrong block numbers sometimes */
+	'ArsBitcoin',
+	'Bitcoins.lc',
+	'Bitcoinpool',
+	'EclipseMC',
+
+	/* ??? */
+	'BTCMine',
+	'BTCGuild',
+	'BitPit',
+	'Mineco.in',
+	'Ozco.in',
+	'Slush',
+	'X8s',
+	'TripleMining',
+	'RFCPool',
+
+	/* (Somewhat) trusted */
+	'MtRed',
+	'DeepBit',
+	'Eligius',
+);
 
 /* --------------------------------------------------------------------------------------------------- */
 

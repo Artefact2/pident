@@ -48,25 +48,25 @@ foreach($accuracy as $pool => $a) {
 	$p = @(100 * (
 		$a['accuracy'][C_MOST_LIKELY]
 	) / $a['sample_size']);
-	$rows .= "<td style='background-color: rgba(166, 230, 132, ".number_format($p / 100, 2).");'>".$round($p)." %</td>\n";
+	$rows .= "<td style='background-color: rgba(130, 160, 230, ".number_format($p / 100, 2).");'>".$round($p)." %</td>\n";
 	$overallTotal += $p * 6 * $sSize;
 
 	$p = @(100 * (
 		$a['accuracy'][C_MOST_LIKELY] + $a['accuracy'][C_PROBABLY]
 	) / $a['sample_size']);
-	$rows .= "<td style='background-color: rgba(176, 230, 100, ".number_format($p / 100, 2).");'>".$round($p)." %</td>\n";
+	$rows .= "<td style='background-color: rgba(151, 173, 211, ".number_format($p / 100, 2).");'>".$round($p)." %</td>\n";
 	$overallTotal += $p * 4 * $sSize;
 
 	$p = @(100 * (
 		$a['accuracy'][C_MOST_LIKELY] + $a['accuracy'][C_PROBABLY] + $a['accuracy'][C_WILD_GUESS]
 	) / $a['sample_size']);
-	$rows .= "<td style='background-color: rgba(186, 230, 70, ".number_format($p / 100, 2).");'>".$round($p)." %</td>\n";
+	$rows .= "<td style='background-color: rgba(170, 185, 207, ".number_format($p / 100, 2).");'>".$round($p)." %</td>\n";
 	$overallTotal += $p * 2 * $sSize;
 
 	$p = @(100 * (
 		$a['accuracy'][C_MOST_LIKELY] + $a['accuracy'][C_PROBABLY] + $a['accuracy'][C_WILD_GUESS] + $a['accuracy'][C_NOT_SURE_AT_ALL]
 	) / $a['sample_size']);
-	$rows .= "<td style='background-color: rgba(196, 230, 60, ".number_format($p / 100, 2).");'>".$round($p)." %</td>\n";
+	$rows .= "<td style='background-color: rgba(178, 189, 187, ".number_format($p / 100, 2).");'>".$round($p)." %</td>\n";
 	$overallTotal += $p * $sSize;
 
 	$p = @(100 * $a['false_positives'] / $a['sample_size']);

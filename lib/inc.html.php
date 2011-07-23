@@ -231,7 +231,7 @@ function formatAddressTransactions($data, $in = true) {
 </tr>";
 
 
-	ob_start();
+	$rows = '';
 	foreach($data as $id => $tx) {
 		$id = bits2hex($id);
 		$block = $tx['block'];
@@ -256,17 +256,16 @@ function formatAddressTransactions($data, $in = true) {
 
 		$blockNumber = (TONAL ? 't' : '').urlencode(formatInt($blockNum, false));
 
-		echo "<tr id='$prefix$id'>\n";
-		echo "<td><a href='#$prefix$id'>#</a></td>\n";
-		echo "<td><a href='/tx/$id' title='$id'>".substr($id, 0, 14)."…</a></td>\n";
-		echo "<td><a href='/b/$blockNumber'>".formatInt($blockNum)."</a></td>\n";
-		echo "<td><a href='/block/$block#$id'>".$block."</a></td>\n";
-		echo "<td>\n".$a."\n</td>\n";
-		echo "<td>\n".formatSatoshi($amount)."\n</td>\n";
-		echo "</tr>\n";
+		$rows .= "<tr id='$prefix$id'>\n";
+		$rows .= "<td><a href='#$prefix$id'>#</a></td>\n";
+		$rows .= "<td><a href='/tx/$id' title='$id'>".substr($id, 0, 14)."…</a></td>\n";
+		$rows .= "<td><a href='/b/$blockNumber'>".formatInt($blockNum)."</a></td>\n";
+		$rows .= "<td><a href='/block/$block#$id'>".$block."</a></td>\n";
+		$rows .= "<td>\n".$a."\n</td>\n";
+		$rows .= "<td>\n".formatSatoshi($amount)."\n</td>\n";
+		$rows .= "</tr>\n";
 	}
 
-	$rows = ob_get_clean();
 	if(!$rows) {
 		$rows = "<tr><td colspan='6'>No transactions yet.</td></tr>\n";
 	}

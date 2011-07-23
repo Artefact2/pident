@@ -20,26 +20,19 @@ $latest = pg_fetch_row(pg_query('SELECT MAX(number) FROM blocks;'));
 $latest = $latest[0];
 
 $req = "
-SELECT address, found_by, SUM(EXP(-($latest - number) / $tau))
+BEGIN;
+TRUNCATE TABLE scores;
+INSERT INTO scores(address, pool, score) SELECT address, found_by, SUM(EXP(-($latest - number) / $tau))
 FROM blocks
 JOIN blocks_transactions ON blocks.hash = blocks_transactions.block
 JOIN tx_out ON tx_out.transaction_id = blocks_transactions.transaction_id AND tx_out.is_payout = true
 WHERE number >= ($latest - $backlog)
 AND found_by IS NOT NULL
-GROUP BY address, found_by
+GROUP BY address, found_by;
+COMMIT;
 ";
 
-$q = 'BEGIN; TRUNCATE TABLE scores; INSERT INTO scores(address, pool, score) VALUES ';
-$req = pg_query($req);
-$values = array();
-while($r = pg_fetch_row($req)) {
-	list($address, $pool, $score) = $r;
-	$values[] = "(B'$address', '$pool', $score)";
-}
-
-$q .= implode(',', $values);
-$q .= '; COMMIT;';
-pg_query($q);
+pg_query($req);
 
 echo "\nupdating score averages...";
 

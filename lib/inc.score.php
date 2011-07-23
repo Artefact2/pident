@@ -90,25 +90,21 @@ function normalizeScore($rawScore, $size, $txCount, $genCount, $coinbase, $coinb
 	$score = 0;
 	$norm = 0;
 
+	$norm += 25;
+	$score += 25 * (1 - exp(-$rawScore / $avg['score_average']));
+
+	$norm += 1;
+	$score += 1 / (1 + abs($size - $avg['block_size_average']) / $avg['block_size_stddev']);
+
+	$norm += 1;
+	$score += 1 / (1 + abs($txCount - $avg['transaction_count_average']) / $avg['transaction_count_stddev']);
+
 	$norm += 10;
-	$score += 10 * (1 - exp(-$rawScore / $avg['score_average']));
-
-	$norm += 3;
-	$score += 3 / (1 + abs($size - $avg['block_size_average']) / $avg['block_size_stddev']);
-
-	$norm += 4;
-	$score += 4 / (1 + abs($txCount - $avg['transaction_count_average']) / $avg['transaction_count_stddev']);
-
-	/*$norm += 7;
-	if($avg['generation_addresses_stddev'] > 0) {
-		$score += 7 / (1 + 7 * abs($genCount - $avg['generation_addresses_average']) / $avg['generation_addresses_stddev']);
-	} else {
-		$score += (abs($genCount - $avg['generation_addresses_average']) < 0.1) ? 7 : 0;
-	}*/
+	$score += 10 / (1 + 7 * abs($genCount - $avg['generation_addresses_average']) / max(0.00001, $avg['generation_addresses_stddev']));
 
 	if($coinbase2 !== null) {
-		$norm += 7;
-		$score += 7 / (1 + abs(levenshtein(substr($coinbase, 2), substr($coinbase2, 2)) - $avg['coinbase_distance_average']) / $avg['coinbase_distance_stddev']);
+		$norm += 5;
+		$score += 5 / (1 + abs(levenshtein(substr($coinbase, 2), substr($coinbase2, 2)) - $avg['coinbase_distance_average']) / $avg['coinbase_distance_stddev']);
 	}
 
 	return $score / $norm;

@@ -58,5 +58,51 @@ for($i = $start; $i <= $max; ++$i) {
 if(isset($fI)) {
 	invalidateCache('index');
 	invalidateCache('more');
+
+	$max = pg_fetch_row(pg_query('SELECT MAX(number) FROM blocks;'));
+	$max = $max[0];
+
+	$req = pg_query("
+	SELECT current.hash FROM blocks AS current
+	LEFT JOIN blocks AS nextb ON current.hash = nextb.previous_hash
+	WHERE current.number < $max
+	AND nextb.hash IS NULL
+	");
+	$orphans = array();
+	while($r = pg_fetch_row($req)) {
+		$orphans[] = "B'".$r[0]."'";
+	}
+	if(($c = count($orphans)) > 0) {
+		echo "\npruning $c orphan blocks...";
+		$in = implode(',', $orphans);
+		pg_query("BEGIN;
+		DELETE FROM blocks_transactions WHERE block IN ($in);
+		DELETE FROM blocks WHERE hash IN ($in);
+		COMMIT;");
+	
+		$req = pg_query("
+		SELECT transactions.transaction_id
+		FROM transactions
+		LEFT JOIN blocks_transactions ON blocks_transactions.transaction_id = transactions.transaction_id
+		WHERE block IS NULL
+		");
+		$orphanTxs = array();
+		while($r = pg_fetch_row($req)) {
+			$orphanTxs[] = "B'".$r[0]."'";
+		}
+		$c = count($orphanTxs);
+		if($c > 0) {
+			echo "\npruning $c orphan transactions...";
+			$in = implode(',', $orphanTxs);
+			pg_query("
+			BEGIN;
+			DELETE FROM tx_in WHERE transaction_id IN ($in);
+			DELETE FROM tx_out WHERE transaction_id IN ($in);
+			DELETE FROM transactions WHERE transaction_id IN ($in);
+			COMMIT;
+			");
+		}
+	}
+
 	echo "\n";
 }

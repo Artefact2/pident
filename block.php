@@ -31,17 +31,18 @@ if(isset($_GET['redirect'])) {
 	} else if(count($hashs) == 0) {
 		header('Content-Type: text/plain', 404, true);
 		echo "There is no block with this number. Problem?";
-	} else {		
+	} else {
+		$fNumber = formatInt($block);
 		echo "<!DOCTYPE html>
 <html>
 <head>
 ".HEADER."
-<title>Ambiguous block $block</title>
+<title>Ambiguous block $fNumber</title>
 </head>
 <body>
-<h1>Ambiguous block <a href='/b/$block'>$block</a></h1>
+<h1>Ambiguous block <a href='/b/$block'>$fNumber</a></h1>
 <p id='back'><a href='/'>&larr; Back to the main page</a></p>
-<p>There are more than one block with number $number. This is often caused by invalid blocks that haven't been pruned from the blockchain yet. Did you mean one of those blocks ?</p>
+<p>There are more than one block with number $fNumber. This is often caused by invalid blocks that haven't been pruned from the blockchain yet. Did you mean one of those blocks ?</p>
 <ul>
 ";
 

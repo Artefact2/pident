@@ -74,17 +74,31 @@ if(isset($fI)) {
 	}
 	if(($c = count($orphans)) > 0) {
 		echo "\npruning $c orphan blocks...";
+		
 		$in = implode(',', $orphans);
+
+		$potentiallyOrphan = array();
+		$req = pg_query("
+		SELECT DISTINCT transaction_id
+		FROM blocks_transactions
+		WHERE block IN ($in);
+		");
+		while($r = pg_fetch_row($req)) {
+			$potentiallyOrphan[] = "B'".$r[0]."'";
+		}
+
 		pg_query("BEGIN;
 		DELETE FROM blocks_transactions WHERE block IN ($in);
 		DELETE FROM blocks WHERE hash IN ($in);
 		COMMIT;");
 	
+		$in = implode(',', $potentiallyOrphan);
 		$req = pg_query("
-		SELECT transactions.transaction_id
+		SELECT DISTINCT transactions.transaction_id
 		FROM transactions
 		LEFT JOIN blocks_transactions ON blocks_transactions.transaction_id = transactions.transaction_id
 		WHERE block IS NULL
+		AND transactions.transaction_id IN ($in);
 		");
 		$orphanTxs = array();
 		while($r = pg_fetch_row($req)) {

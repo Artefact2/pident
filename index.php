@@ -23,7 +23,8 @@ echo "<!DOCTYPE html>
 ";
 
 echo "<h2>Most recent blocks <small><a href='/more'>(see more…)</a></small></h2>\n";
-echo formatRecentBlocks(25);
+list(, $output) = formatRecentBlocks(25, 0);
+echo $output;
 
 echo "<h2>Pools I'm aware of</h2>\n";
 echo formatPools();

@@ -57,7 +57,7 @@ for($i = $start; $i <= $max; ++$i) {
 
 if(isset($fI)) {
 	invalidateCache('index');
-	invalidateCache('more');
+	invalidateCache('more', 'page*', true);
 
 	$max = pg_fetch_row(pg_query('SELECT MAX(number) FROM blocks;'));
 	$max = $max[0];

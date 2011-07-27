@@ -111,7 +111,7 @@ if(isset($hash)) {
 	invalidateCache('index');
 	invalidateCache('more');
 	foreach($updatedPools as $pool => $nevermind) {
-		invalidateCache('pool', $pool);
+		invalidateCache('pool', $pool.'_page*', true);
 	}
 	echo "\n";
 }

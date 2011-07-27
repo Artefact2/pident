@@ -9,21 +9,24 @@
 require __DIR__.'/lib/inc.main.php';
 
 $pool = htmlspecialchars(@array_pop(explode('/', $_SERVER['REQUEST_URI'])));
+$pool = @array_shift(explode('?', $pool, 2));
+$page = getPageNumber('p');
 
-declareCache('pool', $pool);
+declareCache('pool', $pool.'_page'.$page);
+
+list($maxPage, $output) = formatRecentBlocks(100, $page, $pool);
+$fPage = $maxPage > 1 ? ' (page '.formatInt($page).' of '.formatInt($maxPage).')' : '';
 
 echo "<!DOCTYPE html>
 <html>
 <head>
 ".HEADER."
-<title>Pool $pool</title>
+<title>Blocks found by $pool$fPage</title>
 </head>
 <body>
-<h1>Pool <a href='/pool/$pool'>$pool</a> (most recent blocks)</h1>
+<h1>Blocks found by <a href='/pool/$pool'>$pool</a>$fPage</h1>
 <p id='back'><a href='/'>&larr; Back to the main page</a></p>
-";
-
-echo formatRecentBlocks(100, $pool);
+$output";
 
 echo FOOTER."
 </body>

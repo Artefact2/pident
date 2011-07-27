@@ -8,22 +8,25 @@
 
 require __DIR__.'/lib/inc.main.php';
 
-const RECENT = 500;
+const BLOCKS_PER_PAGE = 500;
 
-declareCache('more');
+$page = getPageNumber('p');
+
+declareCache('more', 'page'.$page);
+
+list($maxPage, $output) = formatRecentBlocks(BLOCKS_PER_PAGE, $page);
+$fPage = formatInt($page).' of '.formatInt($maxPage);
 
 echo "<!DOCTYPE html>
 <html>
 <head>
 ".HEADER."
-<title>More recent blocks</title>
+<title>Block list (page $fPage)</title>
 </head>
 <body>
-<h1>".RECENT." most recent blocks</h1>
+<h1>Block list (page $fPage)</h1>
 <p id='back'><a href='/'>&larr; Back to the main page</a></p>
-";
-
-echo formatRecentBlocks(RECENT);
+$output";
 
 echo FOOTER."
 </body>

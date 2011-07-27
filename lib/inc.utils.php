@@ -203,3 +203,67 @@ function stddev($array, $average) {
 
 	return sqrt($variance / ($c - 1));
 }
+
+function makePagination($getParam, $currentPage, $rowsPerPage, $rowCount, $previous = '&lt; Previous page', $next = 'Next page &gt;') {
+	$get = $_GET;
+	$maxPage = max(1, ceil($rowCount / $rowsPerPage));
+
+	$m = $currentPage - 1;
+	$M = $maxPage - $currentPage;
+	$candidates = array(
+		$currentPage,
+		$currentPage + 1,
+		$currentPage + 2,
+		$currentPage + 5,
+		$currentPage + 10,
+		$currentPage - 1,
+		$currentPage - 2,
+		$currentPage - 5,
+		$currentPage - 10,
+		ceil($currentPage + 0.2 * $M),
+		ceil($currentPage + 0.8 * $M),
+		floor($currentPage - 0.2 * $m),
+		floor($currentPage - 0.8 * $m)
+	);
+	$candidates = array_unique(array_filter($candidates, function($k) use($maxPage) { return $k >= 1 && $k <= $maxPage; }));
+	sort($candidates);
+	
+
+	$out = '';
+	foreach($candidates as $i) {
+		$get[$getParam] = $i;
+		$fGet = http_build_query($get);
+		$fI = formatInt($i);
+		if($i == $currentPage) {
+			$out .= ' <strong class="p">'.$fI.'</strong>';
+		} else {
+			$out .= " <a href='?$fGet' class='p'>".$fI.'</a>';
+		}
+	}
+
+	if($currentPage < $maxPage) {
+		$get[$getParam] = $currentPage + 1;
+		$fGet = http_build_query($get);
+		$next = "<a href='?$fGet'>$next</a>";
+	} else $next = "<small>$next</small>";
+	
+	if($currentPage >= 2) {
+		$get[$getParam] = $currentPage - 1;
+		$fGet = http_build_query($get);
+		$previous = "<a href='?$fGet'>$previous</a>";
+	} else $previous = "<small>$previous</small>";
+
+	return "<span class='p_prev'>$previous</span><span class='p_next'>$next</span>".trim($out);
+}
+
+function getPageNumber($getParam) {
+	if(isset($_GET[$getParam])) {
+		if(preg_match("%^[1-9][0-9]*$%", $_GET[$getParam])) {
+			return (int)$_GET[$getParam];
+		} else {
+			header('Content-Type: text/plain');
+			header('HTTP/1.1 404 Not Found', true, 404);
+			die('Invalid page number. Kthxbai!');
+		}
+	} else return 1;
+}

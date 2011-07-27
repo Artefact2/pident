@@ -31,6 +31,7 @@ function fetchAddressTransactions($hash160) {
 
 	if($firstBlock === null) {
 		header('Content-Type: text/plain');
+		header('HTTP/1.1 404 Not Found', true, 404);
 		die('Address not found. U mad bro?');
 	}
 
@@ -66,6 +67,7 @@ function fetchTransactions($blockHash, $txHash = null) {
 		$r = pg_fetch_row($req);
 		if($r == false || !isset($r[0])) {
 			header('Content-Type: text/plain', true, 404);
+			header('HTTP/1.1 404 Not Found', true, 404);
 			die('Block not found. U jelly?');
 		}
 		$time = date('Y-m-d H:i:s', $r[0]);
@@ -90,6 +92,7 @@ function fetchTransactions($blockHash, $txHash = null) {
 		$r = pg_fetch_row($req);
 		if($r == false || !isset($r[0])) {
 			header('Content-Type: text/plain', true, 404);
+			header('HTTP/1.1 404 Not Found', true, 404);
 			die('Transaction not found. U mad bro?');
 		}
 		$block = bits2hex($r[0]);
@@ -284,17 +287,36 @@ $rows
 ";
 }
 
-function formatRecentBlocks($n, $foundBy = null, $recentScores = 0) {
+function formatRecentBlocks($n, $page = 0, $foundBy = null, $recentScores = 0) {
 	if($foundBy !== null) {
 		$cond = "found_by = '$foundBy'";
 	} else $cond = 'true';
+
+	if($page > 0) {
+		$blockCount = pg_fetch_row(pg_query('SELECT COUNT(hash) FROM blocks WHERE '.$cond.';'));
+		$blockCount = $blockCount[0];
+
+		$offset = ($page - 1) * $n;
+		if($offset >= $blockCount) {
+			header('Content-Type: text/plain');
+			header('HTTP/1.1 404 Not Found', true, 404);
+			die('Invalid page number. Kthxbai!');
+		}
+
+		$maxPage = ceil($blockCount / $n);
+		$pagination = ($maxPage > 1) ? "<tr><td colspan='6'>".makePagination('p', $page, $n, $blockCount, '&lt; Newer blocks', 'Older blocks &gt;')."</td></tr>\n" : '';
+	} else {
+		$offset = 0;
+		$pagination = '';
+		$maxPage = 1;
+	}
 
 	$req = pg_query("
 	SELECT blocks.hash, time, found_by, number, size
 	FROM blocks
 	WHERE $cond
 	ORDER BY number DESC
-	LIMIT $n
+	LIMIT $n OFFSET $offset
 	");
 
 	$cols = "<tr>
@@ -340,18 +362,18 @@ function formatRecentBlocks($n, $foundBy = null, $recentScores = 0) {
 		$rows .= "</tr>\n";
 	}
 
-	return "<table>
+	return array($maxPage, "<table>
 <thead>
-$cols
+$pagination$cols
 </thead>
 <tfoot>
-$cols
+$cols$pagination
 </tfoot>
 <tbody>
 $rows
 </tbody>
 </table>
-";
+");
 }
 
 function formatPools() {

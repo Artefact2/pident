@@ -114,3 +114,28 @@ td.inout > table tr:first-child {
 span.bz {
 	color: #BBB;
 }
+
+span.p_next {
+	display: inline-block;
+	float: right;
+}
+
+span.p_prev {
+	display: inline-block;
+	float: left;
+}
+
+a.p, strong.p {
+	display: inline-block;
+	width: 3em;
+	text-align: center;
+	border: 1px solid white;
+}
+
+strong.p {
+	border: 1px solid black;
+}
+
+a.p:hover {
+	border: 1px solid #888;
+}

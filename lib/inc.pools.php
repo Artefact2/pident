@@ -248,6 +248,24 @@ $foundBy = array(
 		
 		return array(BLOCK_HASHES, $blks);
 	},
+	'PolMine' => function() {
+		$blockPage = curl_get_uri('http://polmine.pl/?action=statistics');
+
+		preg_match_all('%href=\'http://blockexplorer.com/tx/([0-9a-f]{64})\'%', $blockPage, $matches);
+
+		$txBits = array();
+		foreach($matches[1] as $tx) {
+			$txBits[] = 'B\''.hex2bits($tx).'\'';
+		}
+		if(count($txBits) == 0) return array(-1, array());
+		$blocks = pg_query('SELECT DISTINCT block FROM blocks_transactions WHERE transaction_id IN ('.implode(',', $txBits).')');
+		$hashs = array();
+		while($r = pg_fetch_row($blocks)) {
+			$hashs[] = bits2hex($r[0]);
+		}
+
+		return array(BLOCK_HASHES, $hashs);
+	},
 );
 
 /* Accurate methods */
@@ -295,6 +313,7 @@ $poolsTrust = array(
 	'TripleMining',
 	'RFCPool',
 	'BTCMP',
+	'PolMine',
 
 	/* (Somewhat) trusted */
 	'MtRed',

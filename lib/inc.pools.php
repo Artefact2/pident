@@ -266,6 +266,27 @@ $foundBy = array(
 
 		return array(BLOCK_HASHES, $hashs);
 	},
+	'MainframeMC' => function() {
+		if(!$GLOBALS['conf']['mmc']['username'] || !$GLOBALS['conf']['mmc']['password']) {
+			return array(-1, array());
+		}
+
+		$login = curl_get_uri('http://mining.mainframe.nl/stats');
+		
+		$post['username'] = $GLOBALS['conf']['mmc']['username'];
+		$post['password'] = $GLOBALS['conf']['mmc']['password'];
+
+		curl_send_request('http://mining.mainframe.nl/login', $post);
+
+		$main = curl_get_uri('http://mining.mainframe.nl/statsAuth');
+		$main = explode('Last 50 Blocks Found', $main, 2);
+		$main = array_pop($main);
+
+		var_dump($main);
+		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $main, $blocksN);
+
+		return array(BLOCK_NUMBERS, $blocksN[1]);
+	},
 );
 
 /* Accurate methods */
@@ -308,6 +329,7 @@ $poolsTrust = array(
 	'BitPit',
 	'Mineco.in',
 	'Ozco.in',
+	'MainframeMC',
 	'Slush',
 	'X8s',
 	'TripleMining',

@@ -33,7 +33,11 @@ mtred[password] = ""
 ; Fill this if you want EMC support.
 eclipsemc_apikey = ""
 
-; fill these if you want Ozco.in support.
+; Fill these if you want Ozco.in support.
 ozcoin[username] = ""
 ozcoin[password] = ""
+
+; Fill these if you want MMC support.
+mmc[username] = ""
+mmc[password] = ""
 

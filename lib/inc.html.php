@@ -390,6 +390,8 @@ function formatPools() {
 	ORDER BY found_by ASC
 	");
 
+	$other = 1.00;
+
 	$rows = array();
 	while($r = pg_fetch_row($req)) {
 		$row = "<tr>\n";
@@ -410,6 +412,8 @@ function formatPools() {
 			number_format(100 * $prop, $prop < 0.01 ? 2 : 1);
 		$fProp = ($info ? '~' : '').$fProp.' %';
 
+		$other -= $prop;
+
 		$row .= "<td>$prettyPool</td>\n";
 		$row .= "<td><a href='/pool/$pool'>".formatInt($count)."</a>$info</td>\n";
 		$row .= "<td><span class='pool prop' style='background-color: rgba(255, 255, 127, $opacity);'>$fProp</span></td>\n";
@@ -422,6 +426,10 @@ function formatPools() {
 	usort($rows, function($a, $b) { return (int)(1000 * ($b[0] - $a[0])); });
 	$fRows = '';
 	foreach($rows as $row) $fRows .= $row[1];
+
+	$fOther = TONAL ? tonalNumberFormat(0x100 * $other, $other < 1/0x100 ? 2 : 1) : 
+		number_format(100 * $other, $other < 0.01 ? 2 : 1);
+	$fRows .= "<tr class='p_other'>\n<td>Other / Solo</td>\n<td>N/A</td>\n<td>~$fOther %</td>\n</tr>\n";
 	
 	return "<table>
 <thead>

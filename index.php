@@ -22,6 +22,12 @@ echo "<!DOCTYPE html>
 <h1>pident — pool-biased blockchain representation <small>(version $version!)</small></h1>
 ";
 
+$factoids = cacheFetch('factoids', $success);
+if($success && count($factoids) > 0) {
+	$f = formatRandomFactoid($factoids);
+	echo "<h2 id='factoid'>Random <a href='/factoids'>factoid</a></h2><p>$f</p>";
+}
+
 echo "<h2>Most recent blocks <small><a href='/more'>(see more…)</a></small></h2>\n";
 list(, $output) = formatRecentBlocks(25, 0);
 echo $output;

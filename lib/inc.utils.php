@@ -104,6 +104,11 @@ function formatInt($i, $separators = true) {
 	else return number_format($i, 0, '.', $separators ? ',' : '');
 }
 
+function formatNumber($i, $decimals = 0) {
+	if(TONAL) return tonalNumberFormat($i, $decimals);
+	else return number_format($i, $decimals);
+}
+
 function prettyDuration($duration, $precision = 4) {
 	if($duration < 60) return "a few seconds";
 	else if($duration < 300) return "a few minutes";

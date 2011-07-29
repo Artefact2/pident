@@ -139,3 +139,30 @@ strong.p {
 a.p:hover {
 	border: 1px solid #888;
 }
+
+h2#factoid {
+	display: inline-block;
+	padding-bottom: 0;
+	margin-bottom: 0;
+}
+
+h2#factoid:after {
+	content: ": ";
+	font-size: 0.8em;
+}
+
+h2#factoid + p {
+	padding-left: 0.5em;
+	display: inline-block;
+	margin-bottom: 0;
+	padding-bottom: 0;
+}
+
+ul#factoids {
+	list-style-type: square;
+}
+
+ul#factoids li {
+	margin-top: 0.3em;
+	margin-bottom: 0.7em;
+}

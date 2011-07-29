@@ -9,6 +9,7 @@ RewriteRule ^b/(0|([1-9][0-9]*))$ block.php?redirect
 RewriteRule ^score/0000[0-9a-fA-F]{60}$ score.php
 RewriteRule ^more$ more.php
 RewriteRule ^accuracy$ accuracy.php
+RewriteRule ^factoids$ factoids.php
 
 RewriteRule ^update /dev/null
 RewriteRule ^hacks\.php$ /dev/null

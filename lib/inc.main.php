@@ -31,6 +31,7 @@ require __DIR__.'/inc.pools.php';
 require __DIR__.'/inc.score.php';
 require __DIR__.'/inc.html.php';
 require __DIR__.'/inc.update.php';
+require __DIR__.'/inc.factoids.php';
 
 define('TONAL', isset($GLOBALS['conf']['tonal_override']) ?
 	$GLOBALS['conf']['tonal_override'] :

@@ -9,7 +9,7 @@
 const BLOCK_HASHES = 1; /* Function returns block hashes */
 const BLOCK_NUMBERS = 2; /* Function returns block numbers */
 
-function curl_get_uri($uri) {
+function curl_get_uri($uri, $headers = array()) {
 	$c = curl_init($uri);
 	curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
 	curl_setopt($c, CURLOPT_SSL_VERIFYPEER, false);
@@ -17,6 +17,7 @@ function curl_get_uri($uri) {
 	curl_setopt($c, CURLOPT_FAILONERROR, true);
 	curl_setopt($c, CURLOPT_COOKIEJAR, "cookies.txt");
 	curl_setopt($c, CURLOPT_COOKIEFILE, "cookies.txt");
+	curl_setopt($c, CURLOPT_HTTPHEADER, $headers);
 	$result = curl_exec($c);
 
 	if($result === false) {
@@ -28,7 +29,11 @@ function curl_get_uri($uri) {
 	return $result;
 }
 
-function curl_send_request($uri, $postFields) {
+function curl_simulate_xmlhttprequest($uri) {
+	$c = curl_init($uri);
+}
+
+function curl_send_request($uri, $postFields, $headers = array()) {
 	$c = curl_init($uri);
 
 	curl_setopt($c, CURLOPT_POSTFIELDS, http_build_query($postFields, '', '&'));
@@ -36,6 +41,7 @@ function curl_send_request($uri, $postFields) {
 	curl_setopt($c, CURLOPT_HEADER, false);
 	curl_setopt($c, CURLOPT_FOLLOWLOCATION, true);
 
+	curl_setopt($c, CURLOPT_HTTPHEADER, $headers);
 	curl_setopt($c, CURLOPT_COOKIEJAR, "cookies.txt");
 	curl_setopt($c, CURLOPT_COOKIEFILE, "cookies.txt");
 	curl_setopt($c, CURLOPT_RETURNTRANSFER, true);
@@ -174,9 +180,9 @@ $foundBy = array(
 	},
 	'BitPit' => function() {
 		$main = curl_get_uri('https://pool.bitp.it/rounds');
-		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $main, $blocksN);
+		preg_match_all('%href="http://(blockexplorer|pident.artefact2).com/b/([0-9]+)"%', $main, $blocksN);
 
-		return array(BLOCK_NUMBERS, $blocksN[1]);
+		return array(BLOCK_NUMBERS, $blocksN[2]);
 	},
 	'EclipseMC' => function() {
 		if(!($api = $GLOBALS['conf']['eclipsemc_apikey'])) {
@@ -209,6 +215,38 @@ $foundBy = array(
 		}
 
 		return array(BLOCK_HASHES, $hashs);
+	},
+	'BTCMP' => function() {
+		curl_get_uri('http://btcmp.com/');
+		$cookies = file('cookies.txt');
+		$sessionId = false;
+		foreach($cookies as $cookie) {
+			// The line we are looking for looks like this :
+			// btcmp.com	FALSE	/	FALSE	1311939896	session_id	035b9cb1511ee713f9484d93ab92276bf997446c
+
+			if(strpos($cookie, 'btcmp.com') !== 0) continue;
+			if(strpos($cookie, 'session_id') === false) continue;
+
+			$k = explode("\t", $cookie);
+			$sessionId = trim(array_pop($k));
+			break;
+		}
+
+		assert('$sessionId !== false');
+
+		$p = curl_send_request('http://btcmp.com/methods/pool/list_blocks', 
+			array('limit' => 60, '_token' => $sessionId), 
+			array('X-Requested-With: XMLHttpRequest')
+		);
+
+		$json = json_decode($p, true);
+
+		$blks = array();
+		foreach($json['blockstats'] as $blk) {
+			$blks[] = $blk['blockhash'];
+		}
+		
+		return array(BLOCK_HASHES, $blks);
 	},
 );
 
@@ -256,6 +294,7 @@ $poolsTrust = array(
 	'X8s',
 	'TripleMining',
 	'RFCPool',
+	'BTCMP',
 
 	/* (Somewhat) trusted */
 	'MtRed',

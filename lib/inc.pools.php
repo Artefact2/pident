@@ -282,7 +282,15 @@ $foundBy = array(
 		$main = explode('Last 50 Blocks Found', $main, 2);
 		$main = array_pop($main);
 
-		var_dump($main);
+		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $main, $blocksN);
+
+		return array(BLOCK_NUMBERS, $blocksN[1]);
+	},
+	'NoFeeMining' => function() {
+		$main = curl_get_uri('https://www.nofeemining.com/');
+		$main = explode('Block Stats', $main, 2);
+		$main = array_pop($main);
+
 		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $main, $blocksN);
 
 		return array(BLOCK_NUMBERS, $blocksN[1]);
@@ -330,6 +338,7 @@ $poolsTrust = array(
 	'Mineco.in',
 	'Ozco.in',
 	'MainframeMC',
+	'NoFeeMining',
 	'Slush',
 	'X8s',
 	'TripleMining',

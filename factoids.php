@@ -25,7 +25,7 @@ echo "<!DOCTYPE html>
 <body>
 <h1>Factoid list</h1>
 <p id='back'><a href='/'>&larr; Back to the main page</a></p>
-<ul id='factoids'>
+<ol id='factoids'>
 ";
 
 foreach($factoids as $k => $dontCareAtAllAboutThisValue) {
@@ -33,7 +33,7 @@ foreach($factoids as $k => $dontCareAtAllAboutThisValue) {
 	echo "<li>$f</li>\n";
 }
 
-echo "</ul>\n".FOOTER."
+echo "</ol>\n".FOOTER."
 </body>
 </html>
 ";

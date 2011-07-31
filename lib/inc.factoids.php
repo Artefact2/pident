@@ -10,11 +10,11 @@ function formatFactoid($factoids, $key) {
 	$f = $factoids[$key];
 
 	if($key == 'average_block_size') {
-		$avg = formatNumber($f, 2);
-		return "The average size of a block is <strong>$avg bytes</strong>.";
+		$avg = formatSize($f);
+		return "The average size of a block is <strong>$avg</strong>.";
 	} else if($key == 'average_recent_block_size') {
-		$avg = formatNumber($f, 2);
-		return "The average size of recent blocks is <strong>$avg bytes</strong>.";
+		$avg = formatSize($f);
+		return "The average size of recent blocks is <strong>$avg</strong>.";
 	} else if($key == 'average_transaction_count') {
 		$avg = formatNumber($f, 2);
 		return "Blocks contain, in average, <strong>$avg</strong> transactions.";
@@ -43,7 +43,7 @@ function formatFactoid($factoids, $key) {
 		$unit = TONAL ? 'TBC' : 'BTC';
 		$number = $f[0];
 		$fNum = formatInt($f[0]);
-		return "The block who generated the most $unit ever is block <a href='/b/$number'>$fNum</a> : it generated <strong>$amount $unit</strong> !";
+		return "The block who generated the most $unit ever is block <a href='/b/$number'>$fNum</a>: it generated <strong>$amount $unit</strong>!";
 	} else if($key == 'maximum_generated_btc_recent') {
 		$amount = formatSatoshi(bcadd($f[1], 0, 0));
 		$unit = TONAL ? 'TBC' : 'BTC';
@@ -62,6 +62,26 @@ function formatFactoid($factoids, $key) {
 		$txId = bits2hex($f[1]);
 		$size = formatSize($f[2]);
 		return "The biggest transaction made recently is transaction <a href='/tx/$txId'>$txId</a>. It appeared in block <a href='/b/$number'>$fNum</a> and its size is <strong>$size</strong>.";
+	} else if($key == 'largest_transaction') {
+		$txId = bits2hex($f[0]);
+		$amount = formatSatoshi($f[1]);
+		$unit = TONAL ? 'TBC' : 'BTC';
+		$percent = $f[1] / (pow(10, 8) * 210000. * 50. * 2.);
+		$percent = formatNumber((TONAL ? 0x100 : 100) * $percent, 2);
+		return "Transaction <a href='/tx/$txId'>$txId</a> is the transaction that moved the most $unit ever: <strong>$amount $unit</strong> were transferred! That's about $percent % of all the $unit it is possible to generate.";
+	} else if($key == 'address_count') {
+		$count = $f;
+		$zeroes = log($count / pow(2, 160), TONAL ? 16 : 10);
+		$zeroes = floor(-$zeroes);
+		$zeroes -= 2;
+		$prop = str_repeat('0', $zeroes).'1';
+		$prop = substr($prop, 0, 1).'.'.substr($prop, 1);
+		$fCount = formatInt($count);
+		return "There are <strong>$fCount</strong> different addresses in the block chain. That's less than $prop % of all the addresses that can be generated.";
+	} else if($key == 'most_popular_address') {
+		$address = Bitcoin::hash160ToAddress(bits2hex($f[0]));
+		$count = formatInt($f[1]);
+		return "The address <a href='/address/$address'>$address</a> is very popular! It appeared in <strong>$count</strong> transactions.";
 	}
 
 	else {

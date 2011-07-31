@@ -91,6 +91,24 @@ $factoids['biggest_transaction_recent'] = array($number, $txId, $size);
 
 /* -------- */
 
+$req = pg_query("SELECT transaction_id, SUM(amount) FROM tx_out GROUP BY transaction_id ORDER BY SUM(amount) DESC LIMIT 1;");
+list($txId, $amount) = pg_fetch_row($req);
+$factoids['largest_transaction'] = array($txId, $amount);
+
+/* -------- */
+
+$req = pg_query("SELECT COUNT(DISTINCT address) FROM tx_out;");
+list($count) = pg_fetch_row($req);
+$factoids['address_count'] = $count;
+
+/* -------- */
+
+$req = pg_query("SELECT address, COUNT(DISTINCT transaction_id) FROM tx_out GROUP BY address ORDER BY COUNT(DISTINCT transaction_id) DESC LIMIT 1;");
+list($address, $count) = pg_fetch_row($req);
+$factoids['most_popular_address'] = array($address, $count);
+
+/* -------- */
+
 cacheStore('factoids', $factoids);
 invalidateCache('factoids'); /* Not a bug: invalidates the cached factoids page, not the factoid data */
 invalidateCache('index');

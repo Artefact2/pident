@@ -279,7 +279,7 @@ $foundBy = array(
 		curl_send_request('http://mining.mainframe.nl/login', $post);
 
 		$main = curl_get_uri('http://mining.mainframe.nl/statsAuth');
-		$main = explode('Last 50 Blocks Found', $main, 2);
+		$main = explode('Blocks Found', $main, 2);
 		$main = array_pop($main);
 
 		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $main, $blocksN);

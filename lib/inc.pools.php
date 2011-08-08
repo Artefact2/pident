@@ -71,33 +71,7 @@ $foundBy = array(
 		return array(BLOCK_HASHES, $matches[1]);
 	},
 	'MtRed' => function() {
-		if(!$GLOBALS['conf']['mtred']['username'] || !$GLOBALS['conf']['mtred']['password']) {
-			return array(-1, array());
-		}
-
-		$login = curl_get_uri($lUri = 'https://mtred.com/user/login.html');
-		preg_match_all('%<input type="hidden" value="([^"]+)" name="YII_CSRF_TOKEN" />%', $login, $matches);
-
-		$post['YII_CSRF_TOKEN'] = $matches[1][0];
-		$post['UserLogin[username]'] = $GLOBALS['conf']['mtred']['username'];
-		$post['UserLogin[password]'] = $GLOBALS['conf']['mtred']['password'];
-		$post['UserLogin[rememberMe]'] = '1';
-		$post['yt0'] = 'Login';
-
-		curl_send_request($lUri, $post);
-
-		$blockPage = '';
-		$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/1.html');
-		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/2.html');
-		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/3.html');
-		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/4.html');
-		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/5.html');
-		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/6.html');
-		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/7.html');
-		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/8.html');
-		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/9.html');
-		//$blockPage .= curl_get_uri('https://mtred.com/blocks/index/url/blocks.html/Found_page/10.html');
-
+		$blockPage = curl_get_uri('https://mtred.com/blocks.html');
 		preg_match_all('%href="http://blockexplorer.com/tx/([0-9a-f]{64})"%', $blockPage, $matches);
 
 		$txBits = array();
@@ -202,10 +176,6 @@ $foundBy = array(
 		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $main, $blocksN);
 
 		return array(BLOCK_NUMBERS, $blocksN[1]);
-	},
-	'X8s' => function() {
-		$hashs = json_decode(curl_get_uri('https://btc.x8s.de/api/blockhashes.json'), true);
-		return array(BLOCK_HASHES, $hashs);
 	},
 	'RFCPool' => function() {
 		$rounds = json_decode(curl_get_uri('https://www.rfcpool.com/api/pool/blocks'), true);
@@ -326,7 +296,7 @@ $fallbackIdentify = function($blk) {
  */
 $poolsTrust = array(
 	/* Known to report wrong block numbers sometimes */
-	'ArsBitcoin',
+	'ArsBitcoin',    // Clearly reports incorrect block numbers (even for valid rounds), sometimes.
 	'Bitcoins.lc',
 	'Bitcoinpool',
 	'EclipseMC',
@@ -340,16 +310,15 @@ $poolsTrust = array(
 	'MainframeMC',
 	'NoFeeMining',
 	'Slush',
-	'X8s',
 	'TripleMining',
 	'RFCPool',
 	'BTCMP',
-	'PolMine',
 
 	/* (Somewhat) trusted */
-	'MtRed',
-	'DeepBit',
-	'Eligius',
+	'PolMine',       // Uses generation TxIds, not troublesome even if invalid
+	'MtRed',         // ^
+	'DeepBit',       // Shows blocks hashes directly, okay even if invalid
+	'Eligius',       // ^
 );
 
 /* --------------------------------------------------------------------------------------------------- */

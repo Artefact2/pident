@@ -241,6 +241,11 @@ $foundBy = array(
 
 		return array(BLOCK_NUMBERS, $blocksN[1]);
 	},
+	'BitMinter' => function() {
+		$page = curl_get_uri('https://bitminter.com/blocks');
+		preg_match_all('%href="/block/([0-9]+)"%', $page, $matches); /* FIXME: filter invalid blocks */
+		return array(BLOCK_NUMBERS, $matches[1]);
+	}
 );
 
 /* Accurate methods */
@@ -278,6 +283,7 @@ $poolsTrust = array(
 	'EclipseMC',
 
 	/* ??? */
+	'BitMinter',
 	'BTCMine',
 	'BTCGuild',
 	'BitPit',

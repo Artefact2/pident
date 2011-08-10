@@ -32,6 +32,24 @@ foreach($poolsTrust as $pool) {
 		$minNumber = pg_fetch_row(pg_query("SELECT MIN(number) FROM blocks WHERE hash IN ($in)"));
 		$minNumber = $minNumber[0];
 		$in = "hash IN ($in)";
+	} else if($type == BLOCK_GENTXID) {
+		foreach($in as &$tx) {
+			$tx = 'B\''.hex2bits($tx).'\'';
+		}	
+		$blocks = pg_query('
+		SELECT DISTINCT block 
+		FROM blocks_transactions 
+		WHERE transaction_id IN ('.implode(',', $in).')
+		');
+		$hashs = array();
+		while($r = pg_fetch_row($blocks)) {
+			$hashs[] = "B'".$r[0]."'";
+		}
+		$in = implode(',', $hashs);
+		$in = "hash IN ($in)";
+
+		$minNumber = pg_fetch_row(pg_query("SELECT MIN(number) FROM blocks WHERE $in"));
+		$minNumber = $minNumber[0];
 	} else {
 		// WTF ?
 		continue;

@@ -8,6 +8,7 @@
 
 const BLOCK_HASHES = 1; /* Function returns block hashes */
 const BLOCK_NUMBERS = 2; /* Function returns block numbers */
+const BLOCK_GENTXID = 3; /* Function returns generation transaction IDs */
 
 function curl_get_uri($uri, $headers = array()) {
 	$c = curl_init($uri);
@@ -73,19 +74,7 @@ $foundBy = array(
 	'MtRed' => function() {
 		$blockPage = curl_get_uri('https://mtred.com/blocks.html');
 		preg_match_all('%href="http://blockexplorer.com/tx/([0-9a-f]{64})"%', $blockPage, $matches);
-
-		$txBits = array();
-		foreach($matches[1] as $tx) {
-			$txBits[] = 'B\''.hex2bits($tx).'\'';
-		}
-		if(count($txBits) == 0) return array(-1, array());
-		$blocks = pg_query('SELECT DISTINCT block FROM blocks_transactions WHERE transaction_id IN ('.implode(',', $txBits).')');
-		$hashs = array();
-		while($r = pg_fetch_row($blocks)) {
-			$hashs[] = bits2hex($r[0]);
-		}
-
-		return array(BLOCK_HASHES, $hashs);
+		return array(BLOCK_GENTXID, $matches[1]);
 	},
 	'BTCGuild' => function() {
 		$main = curl_get_uri('https://www.btcguild.com/blocks.php');
@@ -220,21 +209,8 @@ $foundBy = array(
 	},
 	'PolMine' => function() {
 		$blockPage = curl_get_uri('http://polmine.pl/?action=statistics');
-
 		preg_match_all('%href=\'http://blockexplorer.com/tx/([0-9a-f]{64})\'%', $blockPage, $matches);
-
-		$txBits = array();
-		foreach($matches[1] as $tx) {
-			$txBits[] = 'B\''.hex2bits($tx).'\'';
-		}
-		if(count($txBits) == 0) return array(-1, array());
-		$blocks = pg_query('SELECT DISTINCT block FROM blocks_transactions WHERE transaction_id IN ('.implode(',', $txBits).')');
-		$hashs = array();
-		while($r = pg_fetch_row($blocks)) {
-			$hashs[] = bits2hex($r[0]);
-		}
-
-		return array(BLOCK_HASHES, $hashs);
+		return array(BLOCK_GENTXID, $matches[1]);
 	},
 	'MainframeMC' => function() {
 		if(!$GLOBALS['conf']['mmc']['username'] || !$GLOBALS['conf']['mmc']['password']) {

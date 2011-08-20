@@ -21,7 +21,7 @@ foreach($poolsTrust as $pool) {
 
 
 	list($type, $in) = call_user_func($foundBy[$pool]);
-	if(count($in) == 0) continue;
+	if(!is_array($in) || count($in) == 0) continue;
 
 	if($type == BLOCK_NUMBERS) {
 		$minNumber = min($in);

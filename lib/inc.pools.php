@@ -236,7 +236,12 @@ $foundBy = array(
 		$page = curl_get_uri('https://bitminter.com/blocks');
 		preg_match_all('%href="/block/([0-9]+)"%', $page, $matches); /* FIXME: filter invalid blocks */
 		return array(BLOCK_NUMBERS, $matches[1]);
-	}
+	},
+	'SimpleCoin' => function() {
+		$page = curl_get_uri('http://simplecoin.us/blocks.php');
+		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $page, $matches); /* FIXME: filter invalids */
+		return array(BLOCK_NUMBERS, $matches[1]);
+	},
 );
 
 /* Accurate methods */
@@ -274,6 +279,7 @@ $poolsTrust = array(
 	'EclipseMC',
 
 	/* ??? */
+	'SimpleCoin',
 	'BitMinter',
 	'BTCMine',
 	'BTCGuild',

@@ -32,8 +32,18 @@ echo "<h2>Most recent blocks <small><a href='/more'>(see more…)</a></small></h
 list(, $output) = formatRecentBlocks(25, 0);
 echo $output;
 
+list($output, $props) = formatPools();
 echo "<h2>Pools I'm aware of</h2>\n";
-echo formatPools();
+echo $output;
+
+list($svg, $legend) = formatPoolSizeChart($props);
+echo "<h2>Pool size pie chart <small><a href='http://caniuse.com/svg-html5'>(you need a SVG-enabled browser)</a></small></h2>\n";
+echo "<table id='psize-pie-chart'>
+<tr>
+<td>$svg</td>
+<td>$legend</td>
+</tr>
+</table>\n";
 
 echo FOOTER."
 </body>

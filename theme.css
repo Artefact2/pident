@@ -163,3 +163,20 @@ ol#factoids li {
 	margin-bottom: 0.7em;
 }
 
+table#psize-pie-chart {
+	text-align: left;
+	width: auto;
+}
+
+table#psize-pie-chart td {
+	border: none;
+}
+
+table#psize-pie-chart ul {
+	list-style-type: none;
+}
+
+table#psize-pie-chart ul > li > span {
+	font-size: 1.2em;
+}
+

@@ -1,4 +1,4 @@
-<?PHP
+<?php
 /* Author : Romain "Artefact2" Dalmaso <artefact2@gmail.com>
  * This program is free software. It comes without any warranty, to
  * the extent permitted by applicable law. You can redistribute it
@@ -380,6 +380,7 @@ function formatPools() {
 	$backlog = $GLOBALS['conf']['maximum_backlog'];
 	$threshold = pg_fetch_row(pg_query('SELECT MAX(number) FROM blocks;'));
 	$threshold = $threshold[0] - $backlog;
+	$props = array();
 
 	$req = pg_query("
 	SELECT found_by, COUNT(hash), MIN(number), MAX(number)
@@ -413,6 +414,7 @@ function formatPools() {
 		$fProp = ($info ? '~' : '').$fProp.' %';
 
 		$other -= $prop;
+		$props[$pool] = $prop;
 
 		$row .= "<td>$prettyPool</td>\n";
 		$row .= "<td><a href='/pool/$pool'>".formatInt($count)."</a>$info</td>\n";
@@ -431,7 +433,7 @@ function formatPools() {
 		number_format(100 * $other, $other < 0.01 ? 2 : 1);
 	$fRows .= "<tr class='p_other'>\n<td>Other / Solo</td>\n<td>N/A</td>\n<td>~$fOther %</td>\n</tr>\n";
 	
-	return "<table>
+	return array("<table>
 <thead>
 <tr>
 <th>Pool</th>
@@ -443,7 +445,7 @@ function formatPools() {
 $fRows
 </tbody>
 </table>
-";
+", $props);
 }
 
 function formatScores($block) {
@@ -471,4 +473,30 @@ $rows
 </tbody>
 </table>
 ";
+}
+
+function formatPoolSizeChart($props) {
+	arsort($props);
+
+	$parts = array();
+	$legend = array();
+
+	$tZero = null;
+	foreach($props as $pool => $prop) {
+		$prop = 2 * M_PI * $prop;
+		if($tZero === null) $tZero = -$prop / 2;
+		$parts[] = array($prop, $color = extractPoolColor($pool));
+		$legend[$pool] = $color;
+	}
+
+	$svg = getSVGPie($tZero, $parts, 'width: 40em; height: 40em;');
+	$fLegend = "<ul>\n";
+
+	foreach($legend as $pool => $color) {
+		$fLegend .= "<li><span style='color: $color;'>&#9632;</span> $pool</li>\n";
+	}
+
+	$fLegend .= "</ul>";
+
+	return array($svg, $fLegend);
 }

@@ -141,9 +141,13 @@ function prettyDuration($duration, $precision = 4) {
 function prettyPool($p) {
 	if(!$p) return 'N/A';
 	else {
-		$c = extractColor($p, 200, 256);
+		$c = extractPoolColor($p);
 		return "<span class='pool' style='background-color: $c;'>$p</span>";
 	}
+}
+
+function extractPoolColor($p) {
+	return extractColor($p, 200, 256);
 }
 
 function extractColor($seed, $min = 0, $max = 256) {
@@ -271,4 +275,35 @@ function getPageNumber($getParam) {
 			die('Invalid page number. Kthxbai!');
 		}
 	} else return 1;
+}
+
+function getSVGPie($startAngle, $parts, $style, $addRemainder = true) {
+	$svg = "<svg style='$style' viewBox='0 0 1000 1000' xmlns='http://www.w3.org/2000/svg' version='1.1'>\n";
+	$center = 500;
+	$radius = 500;
+	$tOffset = -M_PI / 2;
+
+	if($addRemainder) {
+		$sum = 0;
+		foreach($parts as $elt) $sum += $elt[0];
+		$rem = 2 * M_PI - $sum;
+		if($rem > 0) $parts[] = array($rem, '#F0F0F0');
+	}
+
+	foreach($parts as $element) {
+		list($theta, $color) = $element;
+		$startX = $center + $radius * cos($startAngle + $tOffset);
+		$startY = $center + $radius * sin($startAngle + $tOffset);
+		$destX = $center + $radius * cos($startAngle + $theta + $tOffset);
+		$destY = $center + $radius * sin($startAngle + $theta + $tOffset);
+
+		$largeArc = ($theta > M_PI) ? 1 : 0;
+
+		$svg .= "<path d='M$center,$center L$startX,$startY A$radius,$radius 0 $largeArc,1 $destX,$destY L$center,$center' fill='$color' />\n";
+
+		$startAngle += $theta;
+	}
+
+	$svg .= "</svg>";
+	return $svg;
 }

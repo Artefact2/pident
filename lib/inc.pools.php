@@ -242,6 +242,12 @@ $foundBy = array(
 		preg_match_all('%href="http://blockexplorer.com/b/([0-9]+)"%', $page, $matches); /* FIXME: filter invalids */
 		return array(BLOCK_NUMBERS, $matches[1]);
 	},
+	'BTCServ' => function() {
+		$page = curl_get_uri('http://btcserv.net/pool/round-stats/');
+		$page = str_replace(array(',', ' ', "\n", "\t"), '', $page);
+		preg_match_all('%<tr><td>([0-9]+)</td><td>%', $page, $matches);
+		return array(BLOCK_NUMBERS, $matches[1]);
+	},
 );
 
 /* Accurate methods */
@@ -279,6 +285,7 @@ $poolsTrust = array(
 	'EclipseMC',
 
 	/* ??? */
+	'BTCServ',
 	'SimpleCoin',
 	'BitMinter',
 	'BTCMine',

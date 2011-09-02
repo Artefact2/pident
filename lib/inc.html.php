@@ -407,7 +407,7 @@ function formatPools() {
 		else $info = '';
 
 		$mtbb = ($r[3] - $r[2]) / $r[1];
-		$prop = $r[1] / max($r[3] - $r[2] + $mtbb, 120);
+		$prop = $r[1] / max($r[3] - $r[2] + $mtbb, $backlog);
 		$opacity = round(1 - cos($prop * M_PI), 2);
 		$fProp = TONAL ? tonalNumberFormat(0x100 * $prop, $prop < 1/0x100 ? 2 : 1) : 
 			number_format(100 * $prop, $prop < 0.01 ? 2 : 1);
@@ -424,8 +424,8 @@ function formatPools() {
 
 		$rows[] = array($prop, $row);
 	}
-
-	usort($rows, function($a, $b) { return (int)(1000 * ($b[0] - $a[0])); });
+	                                             /* Meh */
+	usort($rows, function($a, $b) { return (int)(100000000 * ($b[0] - $a[0])); }); 
 	$fRows = '';
 	foreach($rows as $row) $fRows .= $row[1];
 

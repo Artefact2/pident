@@ -37,14 +37,18 @@ if($initialDump) {
 	}
 
 	for($i = $max; $i >= 0; --$i) {
+		$fI = str_pad($i, $c, '0', STR_PAD_LEFT);
 		$blk = json_decode(shell_exec('bitcoind getblockbycount '.$i), true);
 		if(isset($stop[$blk['hash']])) {
 			$start = $i + 1;
 			break;		
 		}
+		echo "\r$fI/$max rewinding... (".$blk['hash'].")";
 	}
 	if(!isset($start)) $start = 0;
 }
+
+unset($fI);
 
 for($i = $start; $i <= $max; ++$i) {
 	$fI = str_pad($i, $c, '0', STR_PAD_LEFT);

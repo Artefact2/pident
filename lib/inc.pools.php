@@ -166,6 +166,15 @@ $foundBy = array(
 
 		return array(BLOCK_NUMBERS, $blocksN[1]);
 	},
+	'RFCPool' => function() {
+		$rounds = json_decode(curl_get_uri('https://www.rfcpool.com/api/pool/blocks'), true);
+		$hashs = array();
+		foreach($rounds['blocks'] as $r) {
+			$hashs[] = $r['hash'];
+		}
+
+		return array(BLOCK_HASHES, $hashs);
+	},
 	'BTCMP' => function() {
 		curl_get_uri('http://btcmp.com/');
 		$cookies = file('cookies.txt');
@@ -297,6 +306,7 @@ $poolsTrust = array(
 	'NoFeeMining',
 	'Slush',
 	'TripleMining',
+	'RFCPool',
 	'BTCMP',
 
 	/* (Somewhat) trusted */

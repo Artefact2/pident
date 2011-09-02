@@ -22,7 +22,7 @@ pident (Artefact2)
 - Donate to <a href="/address/1666R5kdy7qK2RDALPJQ6Wt1czdvn61CQR">1666R5kdy7qK2RDALPJQ6Wt1czdvn61CQR</a> !
 </p>
 </footer>';
-const VERSION = '0.4';
+const VERSION = '0.5';
 
 require __DIR__.'/inc.cache.php';
 require __DIR__.'/inc.bitcoin.php';
